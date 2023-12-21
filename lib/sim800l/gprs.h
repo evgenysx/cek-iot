@@ -16,10 +16,13 @@ public:
     void gprsLoop();
     String getBalance(const String& code);
 
-    static GsmCustomClient* create(HardwareSerial& serial, eGsmOperator type);
+    static GsmCustomClient* create(HardwareSerial& serial);
 private:
     GsmCustomClient(Stream& stream);
     void setOperator(eGsmOperator type);
+    const String getOperatorName();
+    // определение Оператора связи
+    void detectOperatorIMSI();
     // Tele2 / Yota / ...
     eGsmOperator typeOperator;
     TinyGsmClient client;

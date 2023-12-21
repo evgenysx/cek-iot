@@ -1,6 +1,9 @@
 #include "gprs.h"
 #include "encode_str.hpp"
 
+// See
+//https://codius.ru/articles/GSM_%D0%BC%D0%BE%D0%B4%D1%83%D0%BB%D1%8C_SIM800L_%D1%87%D0%B0%D1%81%D1%82%D1%8C_3
+
 
 // Set serial for debug console (to the Serial Monitor, default speed 115200)
 #define SerialMon Serial
@@ -16,6 +19,20 @@ void GsmCustomClient::setOperator(eGsmOperator type)
   typeOperator = type;
 }
 
+const String GsmCustomClient::getOperatorName()
+{
+  if (typeOperator == eGsmOperator::Tele2)
+  {
+    return "Tele2";
+  }
+  else if (typeOperator == eGsmOperator::Yota)
+  {
+    return "Yota (Скартел)";
+  }else{
+    return "Незвестная сеть " + String((int)typeOperator);
+  }
+}
+
 const String GsmCustomClient::getAPN()
 {
   if (typeOperator == eGsmOperator::Tele2){
@@ -26,6 +43,22 @@ const String GsmCustomClient::getAPN()
   return "not selected APN";
 }
 
+// https://ru.wikipedia.org/wiki/IMSI
+void GsmCustomClient::detectOperatorIMSI(){
+  String imsi = getIMSI();
+  // Mobile Network Code
+  const String mnc = imsi.substring(3,5);
+  if (mnc.equals("11")){
+    setOperator(eGsmOperator::Yota);
+  }else if(mnc.equals("20")){
+    setOperator(eGsmOperator::Tele2);
+  }else if(mnc.equals("01")){
+    setOperator(eGsmOperator::MTC);
+  }else{
+    setOperator(eGsmOperator::NotSelected);
+  }
+
+}
 
 void GsmCustomClient::initGPRS() {
   delay(500);
@@ -46,11 +79,15 @@ void GsmCustomClient::initGPRS() {
     return;
   }
   SerialMon.println(" success");
+  //
+  detectOperatorIMSI();
+  
+  if (isNetworkConnected()) {
+    SerialMon.println("Network connected ...");
+    SerialMon.println("Welcome to " + getOperatorName() + ". Signal quality = " + getSignalQuality());
+  }
 
-  if (isNetworkConnected()) { SerialMon.println("Network connected"); }
-
-
-auto apn = getAPN();
+  auto apn = getAPN();
   //GPRS connection parameters are usually set after network registration
   SerialMon.print("Connecting to " + apn);
   if (!gprsConnect(apn.c_str(), "", "")) {
@@ -121,10 +158,9 @@ String GsmCustomClient::getBalance(const String& code)
    }
 }
 
-GsmCustomClient *GsmCustomClient::create(HardwareSerial& serial, eGsmOperator type)
+GsmCustomClient *GsmCustomClient::create(HardwareSerial& serial)
 {
    auto gsmClient = new GsmCustomClient(serial);
-   gsmClient->setOperator(type);
    serial.begin(9600);
    return gsmClient;
 }
