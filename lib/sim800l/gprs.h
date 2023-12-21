@@ -6,9 +6,25 @@
 
 #include <TinyGsmClient.h>
 
-void initGPRS();
-void gprsLoop();
+enum class eGsmOperator {
+    NotSelected = -1, Tele2, Yota, Beeline, MTC, MegaFon
+};
 
-TinyGsmClient& getGsmClient();
+class GsmCustomClient : public TinyGsm{
+public:
+    void initGPRS();
+    void gprsLoop();
+    String getBalance(const String& code);
+
+    static GsmCustomClient* create(HardwareSerial& serial, eGsmOperator type);
+private:
+    GsmCustomClient(Stream& stream);
+    void setOperator(eGsmOperator type);
+    // Tele2 / Yota / ...
+    eGsmOperator typeOperator;
+    TinyGsmClient client;
+
+    const String getAPN();
+};
 
 #endif
