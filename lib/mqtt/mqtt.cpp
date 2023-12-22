@@ -6,7 +6,7 @@ MqttClient::MqttClient()
   
 }
 
-void MqttClient::setClient(Client &espClient)
+void MqttClient::setClient(Client& espClient)
 {
   client.setClient(espClient);
   initMqtt();

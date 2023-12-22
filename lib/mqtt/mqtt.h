@@ -1,7 +1,6 @@
 #ifndef _CEK_WIFICLIENT_H_
 #define _CEK_WIFICLIENT_H_
 
-#include <WiFi.h>
 #include "PubSubClient.h"
 
 
