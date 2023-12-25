@@ -18,13 +18,16 @@ struct MqttSettings
 {
     String host;
     String port;
+    String user;
+    String pwd;
  
     const BufferSerializer serialize();
-    static WifiSettings deSerialize(BufferSerializer& s);
+    static MqttSettings deSerialize(BufferSerializer& s);
 };
 
-struct EepromSettings
+class EepromSettings
 {
+public:
     WifiSettings wifi;
     MqttSettings mqtt;
     // версия прошивки
@@ -35,6 +38,10 @@ struct EepromSettings
     EepromSettings();
     //
     bool save();
+
+    private:
+    uint serialize(uint address, BufferSerializer& buf);
+
     
 };
 

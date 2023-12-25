@@ -63,10 +63,12 @@ EepromSettings::EepromSettings() {
 
 bool EepromSettings::save(){
   auto wifiBuf = wifi.serialize();
+  auto mqttBuf = mqtt.serialize();
 
   const auto totalSz = sizeof(MAGIC_SETTINGS) + (name.length() +1)
       + sizeof(version)
-      + wifiBuf.getSize() + sizeof(size_t);
+      + wifiBuf.getSize() + sizeof(size_t)
+      + mqttBuf.getSize() + sizeof(size_t);
 
   if(!EEPROM.begin(totalSz))
     return false;
@@ -81,12 +83,9 @@ bool EepromSettings::save(){
   EEPROM.writeUInt(address, version);
   address += sizeof(version);
   // данные wifi
-  auto sz = wifiBuf.getSize();
-  EEPROM.writeUInt(address, sz);
-  address += sizeof(sz);
-  EEPROM.writeBytes(address, wifiBuf.getBytes(), sz);
-  address += sz;
-  
+  address = serialize(address, wifiBuf);
+  // данные mqtt
+  address = serialize(address, mqttBuf);
   // контрольная проверка
   if (totalSz != address){
     return false;
@@ -94,4 +93,32 @@ bool EepromSettings::save(){
 
   EEPROM.end();
   return true;
+}
+
+uint EepromSettings::serialize(uint address,BufferSerializer& buf){
+  auto sz = buf.getSize();
+  EEPROM.writeUInt(address, sz);
+  address += sizeof(sz);
+  EEPROM.writeBytes(address, buf.getBytes(), sz);
+  address += sz;
+  return address;
+}
+
+const BufferSerializer cek::MqttSettings::serialize()
+{
+    BufferSerializer buf;
+    buf.put(host);
+    buf.put(port);
+    buf.put(user);
+    buf.put(pwd);
+    return buf;
+}
+
+MqttSettings MqttSettings::deSerialize(BufferSerializer& s){
+  MqttSettings mqttSet;
+  mqttSet.host = s.readString();
+  mqttSet.port = s.readString();
+  mqttSet.user = s.readString();
+  mqttSet.pwd = s.readString();
+  return mqttSet;
 }
