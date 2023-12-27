@@ -17,6 +17,16 @@ void initWifi(String ssid, String password){
   Serial.println(WiFi.localIP()); 
 }
 
+/*
+  Точка доступа для сервисных действий
+*/
+void initAPWifi(String uid){
+   WiFi.softAP(ssidAP + uid, passwordAP);
+ 
+  IPAddress IP = WiFi.softAPIP();
+  Serial.print("AP IP address: ");
+  Serial.println(IP);
+}
 
 #endif
 
