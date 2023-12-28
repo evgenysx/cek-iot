@@ -1,0 +1,81 @@
+<!DOCTYPE HTML><html>
+<head>
+  <title>Cek.iot</title>
+  <meta  http-equiv="Content-Type" name="viewport" content="width=device-width, initial-scale=1.0; charset=utf-8">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" type="text/css" href="css/switch.css">
+</head>
+<body>
+  <h2>Панель управления Cek.iot</h2>
+ 
+  <div class="tabs">
+    <input type="radio" name="inset" value="" id="tab_1" checked>
+    <label for="tab_1">GSM</label>
+
+    <input type="radio" name="inset" value="" id="tab_2">
+    <label for="tab_2">Датчики</label>
+
+    <input type="radio" name="inset" value="" id="tab_2">
+    <label for="tab_2">Прошивка</label>
+
+    <div id="txt_1">
+
+      <div class="form_auth_block">
+        <div class="form_auth_block_content">
+          <label>Уровень сигнала ()</label>
+          <label>Баланс сим-карты </label>
+ 
+          <label class="toggle">
+            <input class="toggle-checkbox" type="checkbox">
+            <div class="toggle-switch"></div>
+            <span class="toggle-label">GPRS</span>
+          </label>
+          
+          <p class="form_auth_block_head_text">Сервис отправки СМС</p>
+          <form class="form_auth_style" method="POST" action="/api/sendSMS">
+            <label>Номер телефона</label>
+            <input type="phone" name="phone" placeholder="+79201234567" required >
+            <label>Текст смс</label>
+            <input type="password" name="auth_pass" placeholder="Введите текст смс" required >
+            <button class="button" type="submit" name="form_auth_submit">Отправить</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+    <div id="txt_2">
+        <p>Вторая вкладка</p>
+        
+    </div>
+    
+</div>
+
+<script>
+
+  // as jQuery
+  let $ = function(s){
+      //or querySelector for one element depends on need
+      return document.querySelector(s);
+  };
+
+  const el = $('.toggle-checkbox');
+  
+  el.addEventListener('click', (e) => {
+    console.log("sw")
+    el.classList.toggle("switch-on")
+    //
+    toggleCheckbox(el);
+  });
+ 
+  function toggleCheckbox(element) {
+    var xhr = new XMLHttpRequest();
+    if(element.checked){ xhr.open("GET", "/update?output="+element.id+"&state=1", true); }
+    else { xhr.open("GET", "/update?output="+element.id+"&state=0", true); }
+    xhr.send();
+  }
+
+</script>
+
+</body>
+</html>
