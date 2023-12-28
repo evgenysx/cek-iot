@@ -21,6 +21,9 @@ void initWifi(String ssid, String password){
   Точка доступа для сервисных действий
 */
 void initAPWifi(String uid){
+  const char* ssidAP     = "cek_solar_";
+  const char* passwordAP = "123456789";
+  
    WiFi.softAP(ssidAP + uid, passwordAP);
  
   IPAddress IP = WiFi.softAPIP();
