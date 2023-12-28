@@ -6,6 +6,7 @@
 #include <ESPAsyncWebServer.h>
 
 AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
 
 const char* ssidAP     = "cek_solar_";
 const char* passwordAP = "123456789";
