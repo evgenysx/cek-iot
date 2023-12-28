@@ -4,15 +4,35 @@
 
 #include "wifi.hpp"
 #include <ESPAsyncWebServer.h>
+#include <ArduinoJson.h>
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
-const char* ssidAP     = "cek_solar_";
-const char* passwordAP = "123456789";
-
 #include "SPIFFS.h"
 
+DynamicJsonDocument doc(128);
+
+void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
+ 
+  if(type == WS_EVT_CONNECT){ 
+    Serial.println("New ws client");
+ 
+  } else if(type == WS_EVT_DATA){
+    doc.clear();
+    //StaticJsonDocument<len> doc;
+    DeserializationError error = deserializeJson(doc, data);
+    if (error)
+        Serial.println(F("Failed to read file, using default configuration"));
+
+    const char* usuario = doc["id"];
+    Serial.println(usuario);
+    Serial.println("Client ws new data");
+
+  } else if(type == WS_EVT_DISCONNECT){
+    Serial.println("Client ws disconnected");
+  }
+}
 
 void startHttpServer(){
  // Define a route to serve the HTML page
@@ -25,6 +45,13 @@ void startHttpServer(){
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/style.css", "text/css");
   });
+
+  server.on("/css/switch.css", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/css/switch.css", "text/css");
+  });
+
+  ws.onEvent(onWsEvent);
+  server.addHandler(&ws);
 
   SPIFFS.begin();
   // Start the server

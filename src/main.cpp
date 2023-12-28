@@ -56,7 +56,8 @@ void setup() {
     Serial.println("Wifi " + settings.wifi.ssid);
   }
   auto uid = String(ESP.getEfuseMac() >> 30);
-  initAPWifi(uid);
+  //initAPWifi(uid);
+  initWifi(settings.wifi.ssid, settings.wifi.pwd);
   startHttpServer();
 
   

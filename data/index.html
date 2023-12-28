@@ -27,7 +27,7 @@
           <label>Баланс сим-карты </label>
  
           <label class="toggle">
-            <input class="toggle-checkbox" type="checkbox">
+            <input id="gsm_gprs_enabled" class="toggle-checkbox" type="checkbox">
             <div class="toggle-switch"></div>
             <span class="toggle-label">GPRS</span>
           </label>
@@ -59,22 +59,52 @@
       return document.querySelector(s);
   };
 
-  const el = $('.toggle-checkbox');
+  const el = $('#gsm_gprs_enabled');
   
   el.addEventListener('click', (e) => {
-    console.log("sw")
     el.classList.toggle("switch-on")
     //
     toggleCheckbox(el);
   });
  
   function toggleCheckbox(element) {
-    var xhr = new XMLHttpRequest();
-    if(element.checked){ xhr.open("GET", "/update?output="+element.id+"&state=1", true); }
-    else { xhr.open("GET", "/update?output="+element.id+"&state=0", true); }
-    xhr.send();
+    
+    let event = {type:"CONTROL", id: element.id, data:element.checked}
+    console.log(event)
+    if(element.checked){
+      socket.send(JSON.stringify(event));
+    }
+    else {
+
+    }
   }
 
+  var socket = new WebSocket("ws://" + window.location.host + "/ws");
+  
+  const connectWsApi = () => {
+    socket.onopen = function() {
+    console.log("Ws-cоединение установлено.");
+  };
+
+  socket.onclose = function(event) {
+    if (event.wasClean) {
+
+    } else {
+      
+    }
+
+  };
+
+  socket.onmessage = function(event) {
+    
+  };
+
+  socket.onerror = function(error) {
+    
+  };
+  };
+
+  connectWsApi();
 </script>
 
 </body>
