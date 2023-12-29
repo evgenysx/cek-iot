@@ -4,9 +4,11 @@
 #include <Arduino.h>
 #include "WiFi.h"
 
-
+/**
+ * Подключение к существующей точке WiFi
+*/
 void initWifi(String ssid, String password){
-  WiFi.begin();             // Connect to the network
+  WiFi.begin(ssid, password);             // Connect to the network
   while (WiFi.status() != WL_CONNECTED) { // Wait for the Wi-Fi to connect
     delay(500);
     Serial.print('.');
@@ -17,7 +19,7 @@ void initWifi(String ssid, String password){
   Serial.println(WiFi.localIP()); 
 }
 
-/*
+/**
   Точка доступа для сервисных действий
 */
 void initAPWifi(String uid){
