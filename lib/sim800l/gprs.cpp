@@ -80,7 +80,7 @@ void GsmCustomClient::initGPRS() {
   }
   SerialMon.println(" success");
   //
-  detectOperatorIMSI();
+  
   
   if (isNetworkConnected()) {
     SerialMon.println("Network connected ...");
@@ -162,5 +162,6 @@ GsmCustomClient *GsmCustomClient::create(HardwareSerial& serial)
 {
    auto gsmClient = new GsmCustomClient(serial);
    serial.begin(9600);
+   gsmClient->detectOperatorIMSI();
    return gsmClient;
 }
