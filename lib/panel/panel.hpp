@@ -25,13 +25,27 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     if (error)
         Serial.println(F("Failed to read file, using default configuration"));
 
-    const char* usuario = doc["id"];
-    Serial.println(usuario);
-    Serial.println("Client ws new data");
+    const char* id = doc["id"];
+    if (!strcmp(id, "relay_enabled")){
+      auto val10 = digitalRead(23);
+      Serial.println(val10);
+      //digitalWrite(23, HIGH);
+      if(val10){
+        digitalWrite(23, LOW); // Записываем в PIN10 высокий уровень
+      }else{
+        digitalWrite(23, HIGH); // Записываем в PIN10 высокий уровень
+      }
+    }
+     
 
   } else if(type == WS_EVT_DISCONNECT){
     Serial.println("Client ws disconnected");
   }
+}
+
+void notify(){
+  // ws.getClients().begin()._node->value
+  // client->message()
 }
 
 void startHttpServer(){
@@ -48,6 +62,10 @@ void startHttpServer(){
 
   server.on("/css/switch.css", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/css/switch.css", "text/css");
+  });
+
+  server.on("/dist/bundle.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/dist/bundle.js", "application/javascript");
   });
 
   ws.onEvent(onWsEvent);
