@@ -1,4 +1,5 @@
-<!DOCTYPE HTML><html>
+<!DOCTYPE HTML>
+<html>
 <head>
   <title>Cek.iot</title>
   <meta  http-equiv="Content-Type" name="viewport" content="width=device-width, initial-scale=1.0; charset=utf-8">
@@ -45,67 +46,16 @@
 
     </div>
     <div id="txt_2">
-        <p>Вторая вкладка</p>
+      <label class="toggle">
+        <input id="relay_enabled" class="toggle-checkbox" type="checkbox">
+        <div class="toggle-switch"></div>
+        <span class="toggle-label">Реле #23</span>
+      </label>
         
     </div>
     
 </div>
 
-<script>
-
-  // as jQuery
-  let $ = function(s){
-      //or querySelector for one element depends on need
-      return document.querySelector(s);
-  };
-
-  const el = $('#gsm_gprs_enabled');
-  
-  el.addEventListener('click', (e) => {
-    el.classList.toggle("switch-on")
-    //
-    toggleCheckbox(el);
-  });
- 
-  function toggleCheckbox(element) {
-    
-    let event = {type:"CONTROL", id: element.id, data:element.checked}
-    console.log(event)
-    if(element.checked){
-      socket.send(JSON.stringify(event));
-    }
-    else {
-
-    }
-  }
-
-  var socket = new WebSocket("ws://" + window.location.host + "/ws");
-  
-  const connectWsApi = () => {
-    socket.onopen = function() {
-    console.log("Ws-cоединение установлено.");
-  };
-
-  socket.onclose = function(event) {
-    if (event.wasClean) {
-
-    } else {
-      
-    }
-
-  };
-
-  socket.onmessage = function(event) {
-    
-  };
-
-  socket.onerror = function(error) {
-    
-  };
-  };
-
-  connectWsApi();
-</script>
-
+<script type="text/javascript" src="dist/bundle.js"></script>
 </body>
 </html>
