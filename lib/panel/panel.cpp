@@ -1,10 +1,14 @@
 
-#ifndef _CEK_ESP_GUIPANEL_H_
-#define _CEK_ESP_GUIPANEL_H_
 
-#include "wifi.hpp"
+#include "panel.h"
+
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
+
+
+#include <map>
+typedef std::function<void()> EventCallback;
+std::map<String, EventCallback*> storeEvents;
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -13,7 +17,7 @@ AsyncWebSocket ws("/ws");
 
 DynamicJsonDocument doc(128);
 
-void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
+void cek::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
  
   if(type == WS_EVT_CONNECT){ 
     Serial.println("New ws client");
@@ -26,15 +30,9 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
         Serial.println(F("Failed to read file, using default configuration"));
 
     const char* id = doc["id"];
-    if (!strcmp(id, "relay_enabled")){
-      auto val10 = digitalRead(23);
-      Serial.println(val10);
-      //digitalWrite(23, HIGH);
-      if(val10){
-        digitalWrite(23, LOW); // Записываем в PIN10 высокий уровень
-      }else{
-        digitalWrite(23, HIGH); // Записываем в PIN10 высокий уровень
-      }
+    auto iter = storeEvents.find(id);
+    if (iter != storeEvents.end()) {
+       (*iter->second)();
     }
      
 
@@ -43,12 +41,11 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
   }
 }
 
-void notify(){
-  // ws.getClients().begin()._node->value
-  // client->message()
+void cek::notify(){
+
 }
 
-void startHttpServer(){
+void cek::startHttpServer(){
  // Define a route to serve the HTML page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
     Serial.println("ESP32 Web Server: New request received:");  // for debugging
@@ -77,39 +74,20 @@ void startHttpServer(){
 }
 
 
-void registerHandler(String url){
+void cek::registerHandler(String url){
     server.on("/api/sendSMS", HTTP_POST, [](AsyncWebServerRequest *request){
         Serial.println("/api/sendSMS");
         request->send(200, "text/html", "test");
     });
 }
 
-void testSPIFF(){
+void cek::testSPIFF(){
     if (!SPIFFS.begin())
     {
         Serial.println("An Error has occurred while mounting SPIFFS");
         return;
     }
     File root = SPIFFS.open("/");
-    	
-
-//     File file = SPIFFS.open("/test.txt", FILE_WRITE);
-
-//     if (!file) {
-//         Serial.println("There was an error opening the file for writing");
-//         return;
-//     }
-//     if (file.print("TEST")) {
-//         Serial.println("File was written");
-//     } else {
-//         Serial.println("File write failed");
-//     }
-
-//   file.close();
-
-    //auto res = SPIFFS.mkdir("gui");
-    
-    //Serial.println("Creating folder " + String(root.available()));
 
     File fileNext = root.openNextFile();
     while(fileNext){
@@ -121,4 +99,7 @@ void testSPIFF(){
     SPIFFS.end();
 }
 
-#endif
+void cek::registerEventCallback(const char* id, EventCallback *callback)
+{
+  storeEvents.insert(std::pair<String, EventCallback*>{id, callback});
+}
