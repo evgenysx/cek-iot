@@ -1,8 +1,4 @@
-#ifndef _CEK_ESP_WIFI_H_
-#define _CEK_ESP_WIFI_H_
-
-#include <Arduino.h>
-#include "WiFi.h"
+#include "cekwifi.h"
 
 /**
  * Подключение к существующей точке WiFi
@@ -32,6 +28,4 @@ void initAPWifi(String uid){
   Serial.print("AP IP address: ");
   Serial.println(IP);
 }
-
-#endif
 
