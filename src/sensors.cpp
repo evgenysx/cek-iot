@@ -9,5 +9,5 @@ std::function<void()> f = []() {
 
 void cek::sensors::init(){
     relay23.setPin(23);
-    registerEventCallback("relay_enabled", &f);
+    cek::ws_bus::registerEventCallback("relay_enabled", &f);
 }

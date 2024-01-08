@@ -7,24 +7,24 @@
 
 
 #include <map>
-typedef std::function<void()> EventCallback;
-std::map<String, EventCallback*> storeEvents;
+
+std::map<String, cek::ws_bus::EventCallback*> storeEvents;
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
+
+
 
 #include "SPIFFS.h"
 
 DynamicJsonDocument doc(128);
 
-void cek::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
+void cek::ws_bus::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
  
   if(type == WS_EVT_CONNECT){ 
     Serial.println("New ws client");
- 
   } else if(type == WS_EVT_DATA){
     doc.clear();
-    //StaticJsonDocument<len> doc;
     DeserializationError error = deserializeJson(doc, data);
     if (error)
         Serial.println(F("Failed to read file, using default configuration"));
@@ -41,16 +41,36 @@ void cek::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsE
   }
 }
 
-void cek::notify(){
+void cek::ws_bus::notify(const EventMsg& msg){
+  DynamicJsonDocument doc(128);
+  doc["type"] = getStrEventType(msg.type);
+  doc["data"] = msg.data;
 
+  //const size_t len = measureJson(doc);
+  char buf[128];
+  serializeJson(doc, buf);
+  Serial.println(buf);
+  ws.textAll(buf);
 }
 
-void cek::startHttpServer(){
+void cek::ws_bus::notify(eEventType type, uint msg)
+{
+  DynamicJsonDocument doc(128);
+  doc["type"] = getStrEventType(type);
+  doc["data"] = msg;
+
+  //const size_t len = measureJson(doc);
+  char buf[128];
+  serializeJson(doc, buf);
+  Serial.println(buf);
+  ws.textAll(buf);
+}
+
+void cek::ws_bus::startHttpServer(){
  // Define a route to serve the HTML page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
     Serial.println("ESP32 Web Server: New request received:");  // for debugging
     request->send(SPIFFS, "/index.html");
-    //request->send(200, "text/html", "<html><body><h1>Hello, ESP32!</h1></body></html>");
   });
 
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -74,32 +94,16 @@ void cek::startHttpServer(){
 }
 
 
-void cek::registerHandler(String url){
+void cek::ws_bus::registerHandler(String url){
     server.on("/api/sendSMS", HTTP_POST, [](AsyncWebServerRequest *request){
         Serial.println("/api/sendSMS");
         request->send(200, "text/html", "test");
     });
 }
 
-void cek::testSPIFF(){
-    if (!SPIFFS.begin())
-    {
-        Serial.println("An Error has occurred while mounting SPIFFS");
-        return;
-    }
-    File root = SPIFFS.open("/");
 
-    File fileNext = root.openNextFile();
-    while(fileNext){
-        Serial.print("FILE: ");
-        Serial.println(fileNext.name());
-        fileNext = root.openNextFile();
-    }
 
-    SPIFFS.end();
-}
-
-void cek::registerEventCallback(const char* id, EventCallback *callback)
+void cek::ws_bus::registerEventCallback(const char* id, EventCallback *callback)
 {
   storeEvents.insert(std::pair<String, EventCallback*>{id, callback});
 }

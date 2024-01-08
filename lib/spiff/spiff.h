@@ -3,8 +3,9 @@
 #define _CEK_ESP_LIB_SPIFF_H_
 
 namespace cek {
-    
+
 void testSPIFF();
+void getPartions();
 
 } // end
 #endif

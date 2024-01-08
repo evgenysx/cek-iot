@@ -1,6 +1,9 @@
 #include <Arduino.h>
-#include "wifi.hpp"
-#include "panel.hpp"
+
+#include "cekwifi.h"
+//
+#include "sensors.h"
+#include "panel.h"
 
 #include "OneWire.h"
 #include "DallasTemperature.h"
@@ -9,6 +12,7 @@
 #include "settings.h"
 #include "gprs.h"
 
+#include "Update.h"
 #define ONE_WIRE_BUS 15
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
@@ -28,18 +32,12 @@ GsmCustomClient* gsmClient;
 
 cek::EepromSettings settings;
 
-void getPartions();
-
 
 void setup() {
   //mqttWifiClient.setClient(espClient);
 
   Serial.begin(115200);
   Serial2.begin(9600);
-
-  //getPartions(); 
-  testSPIFF();
-  
 
   if(!cek::loadSettings()){
     Serial.println("Не найдена известная прошивка");
@@ -52,23 +50,34 @@ void setup() {
     // Serial.println("Cохранена прошивка " + settings.name + " / версия " + String(settings.version));
   }else{
     settings = cek::getEepromSettings();
+    //  settings.wifi.ssid = "GalaxyM51";
+    //  settings.wifi.pwd = "Kvmw9630";
+
+    // if(!settings.save()) n
+    //    Serial.println("Не удалось сохранить прошивку");
+    
+
+
     Serial.println("Загружена прошивка " + settings.name + " / версия " + String(settings.version));
     Serial.println("Wifi " + settings.wifi.ssid);
   }
   auto uid = String(ESP.getEfuseMac() >> 30);
   //initAPWifi(uid);
+  
   initWifi(settings.wifi.ssid, settings.wifi.pwd);
-  startHttpServer();
-
+  cek::ws_bus::startHttpServer();
+  cek::sensors::init();
   
   // registerHandler("222");
   // std::function<void()> serverHandler;
   //registerHandler("/api/sendSMS", )
-  gsmClient = GsmCustomClient::create(Serial2);
-  //gsmClient->initGPRS();
-  auto bal = gsmClient->getBalance("*100#");
-  Serial.println("balance = " + bal);
-  gsmClient->sendSMS("+79081608348", "Test esp32");
+  // gsmClient = GsmCustomClient::create(Serial2);
+
+  // cek::ws_bus::notify(cek::ws_bus::eEventType::GsmUpdateBattPercent, gsmClient->getBattPercent());
+  // gsmClient->initGPRS();
+  // auto bal = gsmClient->getBalance("*100#");
+  // Serial.println("balance = " + bal);
+  // gsmClient->sendSMS("+79081608348", "Test esp32");
   //gsmClient->initGPRS();
 
   //mqttGprsClient.setClient(getGsmClient());
@@ -89,19 +98,7 @@ void setup() {
   
 }
 
-void getPartions(){
-    auto part_iter = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
-    while(part_iter != NULL){
-      auto part_info = esp_partition_get(part_iter);
-      Serial.println(part_info->label);
-      Serial.println(part_info->type);
-      Serial.println(part_info->address, HEX);
-      Serial.println(part_info->size, HEX);
-      Serial.println(part_info->subtype);
-      Serial.println("============================");
-      part_iter = esp_partition_next(part_iter);
-    }
-}
+
 
 
 void loop() {
@@ -138,7 +135,8 @@ void loop() {
   delay(3000);*/
 
   //mqttGprsClient.publish("cek/sp2/tmr1", 30.2);
-  delay(20000);
+ 
+  //delay(10000);
 }
 
 
