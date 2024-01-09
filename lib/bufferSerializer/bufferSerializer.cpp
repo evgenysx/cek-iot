@@ -4,12 +4,12 @@ constexpr auto szSize_t = sizeof(size_t);
 const size_t MEM_BLOCK = 512;
 
 
-byte* BufferSerializer::getBytes()
+const byte* BufferSerializer::getBytes()
 {
     return data;
 }
 
-size_t BufferSerializer::getSize()
+const size_t BufferSerializer::getSize()
 {
     return offset;
 }
@@ -47,6 +47,24 @@ size_t BufferSerializer::readUint()
     memcpy(&len, data + offset, szSize_t);
     offset += szSize_t;
     return len;
+}
+
+bool BufferSerializer::put(BufferSerializer& buf)
+{
+  const auto ln = buf.getSize();
+  put(ln);
+  memcpy(data + offset, buf.getBytes(), ln);
+  offset += ln;
+  return true;
+}
+
+BufferSerializer BufferSerializer::readBuf()
+{
+    const auto ln = readUint();
+    BufferSerializer buf(ln);
+    memcpy((byte*)buf.getBytes(), data + offset, ln);
+    offset += ln;
+    return buf;
 }
 
 bool BufferSerializer::chkAddMemory(size_t szData)

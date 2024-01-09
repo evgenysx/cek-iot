@@ -15,7 +15,7 @@ const BufferSerializer WifiSettings::serialize(){
     return buf;
 }
 
-WifiSettings WifiSettings::deSerialize(BufferSerializer& s){
+WifiSettings WifiSettings::deSerialize(BufferSerializer&& s){
   WifiSettings wifiSet;
   wifiSet.ssid = s.readString();
   wifiSet.pwd = s.readString();
@@ -43,11 +43,15 @@ bool cek::loadSettings()
   // данные WiFi
   auto sz = EEPROM.readUInt(address);
   address += sizeof(sz);
-  BufferSerializer wifiBuf(sz);
-  EEPROM.readBytes(address, wifiBuf.getBytes(), sz);
+  BufferSerializer wifiBufs(sz);
+  EEPROM.readBytes(address, (byte*)wifiBufs.getBytes(), sz);
   address += sz;
   //
-  info.wifi = WifiSettings::deSerialize(wifiBuf);
+  auto lenWifi = wifiBufs.readUint();
+  for(auto i=0;i<lenWifi;i++){
+    info.wifis[i] = WifiSettings::deSerialize(wifiBufs.readBuf());
+  }
+  
   EEPROM.end();
   return true;
 }
@@ -61,13 +65,21 @@ EepromSettings::EepromSettings() {
   //version = 1;
 }
 
-bool EepromSettings::save(){
-  auto wifiBuf = wifi.serialize();
+bool EepromSettings::save(){ 
+  // несколько wifi сетей
+  BufferSerializer wifiBufs;
+  // total nets
+  wifiBufs.put(sizeof(wifis)/sizeof(wifis[0]));
+  for (auto iWifi : wifis){
+    auto wifiBuf = iWifi.serialize();
+    wifiBufs.put(wifiBuf);
+  }
+  
   auto mqttBuf = mqtt.serialize();
 
   const auto totalSz = sizeof(MAGIC_SETTINGS) + (name.length() +1)
       + sizeof(version)
-      + wifiBuf.getSize() + sizeof(size_t)
+      + wifiBufs.getSize() + sizeof(size_t)
       + mqttBuf.getSize() + sizeof(size_t);
 
   if(!EEPROM.begin(totalSz))
@@ -83,7 +95,7 @@ bool EepromSettings::save(){
   EEPROM.writeUInt(address, version);
   address += sizeof(version);
   // данные wifi
-  address = serialize(address, wifiBuf);
+  address = serialize(address, wifiBufs);
   // данные mqtt
   address = serialize(address, mqttBuf);
   // контрольная проверка

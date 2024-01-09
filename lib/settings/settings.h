@@ -11,7 +11,7 @@ struct WifiSettings
     String pwd;
  
     const BufferSerializer serialize();
-    static WifiSettings deSerialize(BufferSerializer& s);
+    static WifiSettings deSerialize(BufferSerializer&& s);
 };
 
 struct MqttSettings
@@ -28,7 +28,8 @@ struct MqttSettings
 class EepromSettings
 {
 public:
-    WifiSettings wifi;
+    // несколько wifi сетей
+    WifiSettings wifis[2]; // last 'n=2' nets
     MqttSettings mqtt;
     // версия прошивки
     uint version;

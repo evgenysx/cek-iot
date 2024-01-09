@@ -5,8 +5,8 @@
 #include <Arduino.h>
 
 struct ISerialize {
-    virtual size_t getSize() = 0;
-    virtual byte* getBytes() = 0;
+    const virtual size_t getSize() = 0;
+    const virtual byte* getBytes() = 0;
 };
 
 class BufferSerializer : public ISerialize{
@@ -22,8 +22,14 @@ class BufferSerializer : public ISerialize{
         bool put(size_t value);
         size_t readUint();
         //
-        size_t getSize() override;
-        byte* getBytes() override;
+        /**
+         * сериализуем BufferSerializer
+        */
+        bool put(BufferSerializer& buf);
+        BufferSerializer readBuf();
+        //
+        const size_t getSize() override;
+        const byte* getBytes() override;
 
 
         //

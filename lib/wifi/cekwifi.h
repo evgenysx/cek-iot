@@ -7,7 +7,7 @@
 /**
  * Подключение к существующей точке WiFi
 */
-void initWifi(String ssid, String password);
+bool initWifi(String ssid, String password);
 
 /**
   Точка доступа для сервисных действий
