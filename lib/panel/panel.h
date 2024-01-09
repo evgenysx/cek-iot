@@ -2,7 +2,6 @@
 #ifndef _CEK_ESP_GUIPANEL_H_
 #define _CEK_ESP_GUIPANEL_H_
 
-#include "wifi.h"
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 

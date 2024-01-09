@@ -50,21 +50,12 @@ void setup() {
     // Serial.println("Cохранена прошивка " + settings.name + " / версия " + String(settings.version));
   }else{
     settings = cek::getEepromSettings();
-    //  settings.wifi.ssid = "GalaxyM51";
-    //  settings.wifi.pwd = "Kvmw9630";
-
-    // if(!settings.save()) n
-    //    Serial.println("Не удалось сохранить прошивку");
-    
-
-
     Serial.println("Загружена прошивка " + settings.name + " / версия " + String(settings.version));
-    Serial.println("Wifi " + settings.wifi.ssid);
   }
   auto uid = String(ESP.getEfuseMac() >> 30);
   //initAPWifi(uid);
-  
-  initWifi(settings.wifi.ssid, settings.wifi.pwd);
+
+  initWifi(settings.wifis[0].ssid, settings.wifis[0].pwd);
   cek::ws_bus::startHttpServer();
   cek::sensors::init();
   
@@ -87,19 +78,12 @@ void setup() {
   //send_SMS();
 
   return;
-  Serial.begin(115200); 
-  initWifi(settings.wifi.ssid, settings.wifi.pwd);
+
   // Запуск библиотеки
   sensors.begin();
   sensorsTempr2.begin();
 
-
-
-  
 }
-
-
-
 
 void loop() {
   //updateSerial();

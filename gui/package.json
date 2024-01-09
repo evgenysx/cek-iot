@@ -5,7 +5,8 @@
   "main": "webpack.config.js",
   "scripts": {
     "dev": "webpack --watch -d source-map --env mode=development",
-    "prod": "webpack --env mode=production"
+    "prod": "webpack --env mode=production",
+    "debug": "nodemon local/server"
   },
   "author": "evgtz",
   "license": "ISC",
@@ -13,6 +14,8 @@
     "webpack": "^5.89.0"
   },
   "devDependencies": {
+    "nodemon": "^3.0.2",
+    "express": "^4.18.2",
     "webpack-cli": "^5.1.4"
   }
 }
