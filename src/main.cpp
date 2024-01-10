@@ -11,6 +11,7 @@
 #include "mqtt.h"
 #include "settings.h"
 #include "gprs.h"
+#include "gsm.h"
 
 #include "Update.h"
 #define ONE_WIRE_BUS 15
@@ -28,7 +29,6 @@ WiFiClient espClient;
 
 MqttClient mqttGprsClient;
 
-GsmCustomClient* gsmClient;
 
 cek::EepromSettings settings;
 
@@ -37,7 +37,6 @@ void setup() {
   //mqttWifiClient.setClient(espClient);
 
   Serial.begin(115200);
-  Serial2.begin(9600);
 
   if(!cek::loadSettings()){
     Serial.println("Не найдена известная прошивка");
@@ -58,6 +57,7 @@ void setup() {
   initWifi(settings.wifis[0].ssid, settings.wifis[0].pwd);
   cek::ws_bus::startHttpServer();
   cek::sensors::init();
+  cek::loadGSMModule();
   
   // registerHandler("222");
   // std::function<void()> serverHandler;

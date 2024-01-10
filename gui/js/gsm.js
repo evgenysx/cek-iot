@@ -3,7 +3,7 @@
  */
 
 import { onclick, changeValue } from "./dom";
-import {notifyToggleCheckbox, regOnMessage, requestUpdate} from './ws'
+import {notifyToggleCheckbox, regOnMessage, regOnOpen, requestUpdate} from './ws'
 import { wsEvents } from "./ws_events";
 
 onclick('#gsm_gprs_enabled', notifyToggleCheckbox);
@@ -18,8 +18,8 @@ regOnMessage(wsEvents.gsm.UpdateBattPercent, (msg) => {
     changeValue("#gsm_battery", msg);
 });
 
-
-setTimeout(function() {
-    console.log("Update");
-    requestUpdate(wsEvents.gsm.UpdateBattPercent);
-}, 10 * 1000);
+regOnOpen(() => {
+    //requestUpdate(wsEvents.gsm.UpdateBattPercent);
+    requestUpdate(wsEvents.gsm.UpdateStatus);
+    requestUpdate(wsEvents.gsm.UpdateSignalQuality);
+});

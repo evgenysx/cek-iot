@@ -128,7 +128,7 @@ void GsmCustomClient::gprsLoop() {
 }
 
 
-String GsmCustomClient::getBalance(const String& code)
+String GsmCustomClient::getUSSD(const String& code)
 {
    //return sendUSSD(code);
    String format = "GSM";
@@ -162,6 +162,10 @@ GsmCustomClient *GsmCustomClient::create(HardwareSerial& serial)
 {
    auto gsmClient = new GsmCustomClient(serial);
    serial.begin(9600);
-   gsmClient->detectOperatorIMSI();
    return gsmClient;
+}
+
+bool GsmCustomClient::isDeviceConnected()
+{
+    return testAT(100);
 }

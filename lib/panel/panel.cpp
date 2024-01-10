@@ -8,7 +8,7 @@
 
 #include <map>
 
-std::map<String, cek::ws_bus::EventCallback*> storeEvents;
+std::map<cek::ws_bus::SubscibeId, cek::ws_bus::EventCallback> storeEvents;
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
@@ -18,6 +18,16 @@ AsyncWebSocket ws("/ws");
 #include "SPIFFS.h"
 
 DynamicJsonDocument doc(128);
+
+cek::ws_bus::SubscibeId parseMsg () {
+    const char* strType = doc["type"];
+    int id = cek::ws_bus::SubscibeId::noSelectedId; 
+    if(doc.containsKey("id"))
+      id = doc["id"];
+    
+    Serial.println("ParseEvent:" + getStrEventType(cek::ws_bus::getEventTypeByStr(strType)) + " / " + String(id));
+    return cek::ws_bus::SubscibeId(cek::ws_bus::getEventTypeByStr(strType), id);
+}
 
 void cek::ws_bus::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
  
@@ -29,8 +39,7 @@ void cek::ws_bus::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * clie
     if (error)
         Serial.println(F("Failed to read file, using default configuration"));
 
-    const char* id = doc["id"];
-    auto iter = storeEvents.find(id);
+    auto iter = storeEvents.find(parseMsg());
     if (iter != storeEvents.end()) {
        (*iter->second)();
     }
@@ -66,6 +75,19 @@ void cek::ws_bus::notify(eEventType type, uint msg)
   ws.textAll(buf);
 }
 
+void cek::ws_bus::notify(eEventType type, String msg)
+{
+  DynamicJsonDocument doc(128);
+  doc["type"] = getStrEventType(type);
+  doc["data"] = msg;
+
+  //const size_t len = measureJson(doc);
+  char buf[128];
+  serializeJson(doc, buf);
+  Serial.println(buf);
+  ws.textAll(buf);
+}
+
 void cek::ws_bus::startHttpServer(){
  // Define a route to serve the HTML page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
@@ -85,6 +107,9 @@ void cek::ws_bus::startHttpServer(){
     request->send(SPIFFS, "/dist/bundle.js", "application/javascript");
   });
 
+  // инициализация списка событий
+  initEventMap();
+
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
 
@@ -103,7 +128,7 @@ void cek::ws_bus::registerHandler(String url){
 
 
 
-void cek::ws_bus::registerEventCallback(const char* id, EventCallback *callback)
+void cek::ws_bus::registerEventCallback(SubscibeId id, EventCallback callback)
 {
-  storeEvents.insert(std::pair<String, EventCallback*>{id, callback});
+  storeEvents.insert(std::pair<SubscibeId, EventCallback>{id, callback});
 }

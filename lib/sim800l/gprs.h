@@ -14,15 +14,18 @@ class GsmCustomClient : public TinyGsm{
 public:
     void initGPRS();
     void gprsLoop();
-    String getBalance(const String& code);
+    String getUSSD(const String& code);
 
     static GsmCustomClient* create(HardwareSerial& serial);
+
+    bool isDeviceConnected();
+    // определение Оператора связи
+    void detectOperatorIMSI();
 private:
     GsmCustomClient(Stream& stream);
     void setOperator(eGsmOperator type);
     const String getOperatorName();
-    // определение Оператора связи
-    void detectOperatorIMSI();
+    
     // Tele2 / Yota / ...
     eGsmOperator typeOperator;
     TinyGsmClient client;

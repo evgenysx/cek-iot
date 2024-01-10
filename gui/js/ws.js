@@ -1,14 +1,18 @@
 import './ws_events'
 
-var socket = new WebSocket("ws://" + window.location.host + "/ws");
+var socket = new WebSocket("ws://" + /*window.location.host*/ "192.168.3.89" + "/ws");
 /**
  * Список зареганых обработчиков
  */
 let mapCallbackEvents = new Map();
+let setCallbackOnOpen = new Set();
 
 const connectWsApi = () => {
   socket.onopen = function() {
     console.log("Ws-cоединение установлено.");
+    for (let onOpenCallback of setCallbackOnOpen) {
+      onOpenCallback(); 
+    }
   };
 
   socket.onclose = function(event) {
@@ -24,7 +28,6 @@ const connectWsApi = () => {
     console.log("new message : " + event.data)
     const msg = JSON.parse(event.data).data;
     for (let listener of mapCallbackEvents) {
-      console.log(listener)
       listener[1](msg); 
     }
   };
@@ -42,7 +45,7 @@ const notifyToggleCheckbox = (el) => {
 }
 
 const requestUpdate = (msg) => {
-  let event = {e: msg}
+  let event = {type: msg}
   socket.send(JSON.stringify(event));
 
 }
@@ -61,4 +64,7 @@ const regOnMessage = (type, callback) => {
  */
 connectWsApi();
 
-export { notifyToggleCheckbox, regOnMessage, requestUpdate};
+const regOnOpen = (callback) => {
+  setCallbackOnOpen.add(callback);
+}
+export { notifyToggleCheckbox, regOnMessage, regOnOpen, requestUpdate};
