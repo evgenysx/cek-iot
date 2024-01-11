@@ -8,8 +8,13 @@ const gsmEvents = {
     CallNumber: 'GsmCallNumber'
 };
 
+const deviceEvents = {
+    RestartDevice: 'RestartDevice',
+};
+
 const wsEvents = {
-    gsm : gsmEvents
+    gsm: gsmEvents,
+    device: deviceEvents,
     
 };
 

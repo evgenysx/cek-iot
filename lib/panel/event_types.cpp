@@ -16,7 +16,8 @@ String strEventType[] PROGMEM = {
   "GsmUpdateBattPercent",
   "GsmSendSMS",
   "GsmCallNumber",
-  "RelayToggle"
+  "RelayToggle",
+  "RestartDevice"
 };
 
 std::map<String, cek::ws_bus::eEventType> reverseEventTypesStore;

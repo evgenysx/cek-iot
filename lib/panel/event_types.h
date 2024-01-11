@@ -16,6 +16,7 @@ enum class eEventType {
   GsmCallNumber,
   RelayToggle,
 
+  RestartDevice,
   NUM_EVENTS
 };
 

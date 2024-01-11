@@ -9,7 +9,6 @@
 </head>
 <body>
   <h2>Панель управления Cek.iot</h2>
- 
   <div class="tabs">
     <input type="radio" name="inset" value="" id="tab_1" checked>
     <label for="tab_1">GSM</label>
@@ -23,6 +22,7 @@
     <div id="txt_1">
 
       <div class="form_auth_block">
+        <button class="button" id="esp_restart_btn" >Перезагрузка</button>
         <div class="form_auth_block_content">
           <label id="gsm_battery">Заряд</label>
           <label id="gsm_status">Статус ...</label>
@@ -42,6 +42,7 @@
             <input type="password" name="auth_pass" placeholder="Введите текст смс" required >
             <button class="button" type="submit" name="form_auth_submit">Отправить</button>
           </form>
+          
         </div>
       </div>
 

@@ -24,8 +24,6 @@ cek::ws_bus::SubscibeId parseMsg () {
     int id = cek::ws_bus::SubscibeId::noSelectedId; 
     if(doc.containsKey("id"))
       id = doc["id"];
-    
-    Serial.println("ParseEvent:" + getStrEventType(cek::ws_bus::getEventTypeByStr(strType)) + " / " + String(id));
     return cek::ws_bus::SubscibeId(cek::ws_bus::getEventTypeByStr(strType), id);
 }
 
@@ -39,9 +37,13 @@ void cek::ws_bus::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * clie
     if (error)
         Serial.println(F("Failed to read file, using default configuration"));
 
-    auto iter = storeEvents.find(parseMsg());
+    auto subInfo = parseMsg();
+    auto iter = storeEvents.find(subInfo);
     if (iter != storeEvents.end()) {
+        Serial.println("Handle :" + getStrEventType(subInfo.type) + " / " + String(subInfo.id));
        (*iter->second)();
+    }else{
+      Serial.println("No any handlers for event '" + getStrEventType(subInfo.type) + "'");
     }
      
 
