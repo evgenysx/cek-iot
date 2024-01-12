@@ -3,8 +3,8 @@
  */
 
 import { onclick, changeValue } from "./dom";
-import {notifyToggleCheckbox, regOnMessage, regOnOpen, requestUpdate} from './ws'
-import { wsEvents } from "./ws_events";
+import {notifyToggleCheckbox, regOnMessage, regOnOpen, requestUpdate, wsEvents} from './ws'
+
 
 onclick('#gsm_gprs_enabled', notifyToggleCheckbox);
 

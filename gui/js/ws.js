@@ -1,30 +1,37 @@
 import './ws_events'
 
-var socket = new WebSocket("ws://" + /*window.location.host*/ "192.168.3.89" + "/ws");
+export {wsEvents} from './ws_events';
+
 /**
  * Список зареганых обработчиков
  */
 let mapCallbackEvents = new Map();
 let setCallbackOnOpen = new Set();
 
+var wsClient;
+
 const connectWsApi = () => {
-  socket.onopen = function() {
+  wsClient = new WebSocket("ws://" + /*window.location.host*/ "192.168.3.89" + "/ws");
+
+  wsClient.onopen = function() {
     console.log("Ws-cоединение установлено.");
     for (let onOpenCallback of setCallbackOnOpen) {
       onOpenCallback(); 
     }
   };
 
-  socket.onclose = function(event) {
-    if (event.wasClean) {
-
-    } else {
-      
-    }
+  wsClient.onclose = function(event) {
+    setTimeout(() => {
+       if (!event.wasClean){
+        console.log("try ws-reconnect");
+        connectWsApi();
+       }
+        
+    }, 10*1000);
 
   };
 
-  socket.onmessage = function(event) {
+  wsClient.onmessage = function(event) {
     console.log("new message : " + event.data)
     const msg = JSON.parse(event.data).data;
     for (let listener of mapCallbackEvents) {
@@ -32,21 +39,22 @@ const connectWsApi = () => {
     }
   };
 
-  socket.onerror = function(error) {
+  wsClient.onerror = function(error) {
     
   };
+
 };
 
 const notifyToggleCheckbox = (el) => {
   let event = {id: el.id, data:el.checked}
   console.log(event)
-  socket.send(JSON.stringify(event));
+  wsClient.send(JSON.stringify(event));
 
 }
 
 const requestUpdate = (msg) => {
   let event = {type: msg}
-  socket.send(JSON.stringify(event));
+  wsClient.send(JSON.stringify(event));
 
 }
 
