@@ -7,6 +7,7 @@ const gsmEvents = {
     SendSMS: 'GsmSendSMS',
     CallNumber: 'GsmCallNumber',
     NetworkInfo: 'GsmNetworkInfo',
+    GsmGetLocation: 'GsmGetLocation',
 };
 
 const deviceEvents = {

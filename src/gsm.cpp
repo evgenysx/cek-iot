@@ -21,7 +21,7 @@ GsmCustomClient *cek::getModule()
 }
 
 cek::ws_bus::EventCallback OnBalanceUpdate = []() {
-    notify(eEventType::GsmUpdateStatus, cek::getModule()->getUSSD("*100#"));
+    notify(eEventType::GsmUpdateBalance, cek::getModule()->getUSSD("*100#"));
 };
 
 cek::ws_bus::EventCallback OnStatusUpdate = []() {
@@ -41,6 +41,10 @@ cek::ws_bus::EventCallback OnSignalQualityUpdate = []() {
 cek::ws_bus::EventCallback OnSendSMS = []() {
     bool result = cek::getModule()->sendSMS("+79081608348","testing esp32");
     notify(eEventType::GsmSendSMS, String(result));
+};
+
+cek::ws_bus::EventCallback OnGetLocation = []() {
+    notify(eEventType::GsmGetLocation, cek::getModule()->getGsmLocation());
 };
 
 cek::ws_bus::EventCallback OnNetworkInfo = []() {
@@ -75,6 +79,7 @@ bool cek::loadGSMModule()
     registerEventCallback(SubscibeId(eEventType::GsmUpdateBalance), OnBalanceUpdate);
     registerEventCallback(SubscibeId(eEventType::GsmSendSMS), OnSendSMS);
     registerEventCallback(SubscibeId(eEventType::GsmNetworkInfo), OnNetworkInfo);
+    registerEventCallback(SubscibeId(eEventType::GsmGetLocation), OnGetLocation);
 
     return true;
 }

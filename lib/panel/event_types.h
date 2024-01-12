@@ -15,6 +15,8 @@ enum class eEventType {
   GsmSendSMS,
   GsmCallNumber,
   GsmNetworkInfo,
+  GsmGetLocation,
+  // реле
   RelayToggle,
   // вывод отладочной информации
   EnableLog,
