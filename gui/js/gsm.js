@@ -26,10 +26,19 @@ regOnMessage(wsEvents.gsm.UpdateSignalQuality, (msg) => {
     console.log('UpdateSignalQuality ' + msg);
 });
 
+regOnMessage(wsEvents.gsm.GsmGetLocation, (msg) => {
+    console.log('GsmGetLocation ' + msg);
+});
+
+regOnMessage(wsEvents.gsm.UpdateBalance, (msg) => {
+    console.log('UpdateBalance ' + msg);
+});
 
 regOnOpen(() => {
     //requestUpdate(wsEvents.gsm.UpdateBattPercent);
     requestUpdate(wsEvents.gsm.UpdateStatus);
     requestUpdate(wsEvents.gsm.UpdateSignalQuality);
     requestUpdate(wsEvents.gsm.NetworkInfo);
+    requestUpdate(wsEvents.gsm.GsmGetLocation);
+    //requestUpdate(wsEvents.gsm.UpdateBalance);
 });
