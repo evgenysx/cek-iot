@@ -13,6 +13,8 @@
 #include "gprs.h"
 #include "gsm.h"
 
+#include "esp32.h"
+
 #include "Update.h"
 #define ONE_WIRE_BUS 15
 OneWire oneWire(ONE_WIRE_BUS);
@@ -57,7 +59,9 @@ void setup() {
   initWifi(settings.wifis[0].ssid, settings.wifis[0].pwd);
   cek::ws_bus::startHttpServer();
   cek::sensors::init();
+  cek::initDevice();
   cek::loadGSMModule();
+  
   
   // registerHandler("222");
   // std::function<void()> serverHandler;

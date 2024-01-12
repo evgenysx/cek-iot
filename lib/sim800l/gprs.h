@@ -21,10 +21,12 @@ public:
     bool isDeviceConnected();
     // определение Оператора связи
     void detectOperatorIMSI();
+    const String getOperatorName();
+    
 private:
     GsmCustomClient(Stream& stream);
     void setOperator(eGsmOperator type);
-    const String getOperatorName();
+    
     
     // Tele2 / Yota / ...
     eGsmOperator typeOperator;

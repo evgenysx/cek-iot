@@ -15,13 +15,17 @@ void registerEventCallback(SubscibeId type, EventCallback callback);
 
 void notify(const EventMsg& msg);
 void notify(eEventType type, uint msg);
-void notify(eEventType type, String msg);
+void notify(eEventType type, const String& msg);
 
 void startHttpServer();
 
 
 void registerHandler(String url);
 
+/**
+ * отладочное сообщение в консоль сервера и в админку
+*/
+void debugInfo(const String& msg);
 
 } // end namespace
 #endif

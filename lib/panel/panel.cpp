@@ -13,6 +13,8 @@ std::map<cek::ws_bus::SubscibeId, cek::ws_bus::EventCallback> storeEvents;
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
+// нужно поместить в настройки прошивки
+bool enabledLog = true;
 
 
 #include "SPIFFS.h"
@@ -34,16 +36,17 @@ void cek::ws_bus::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * clie
   } else if(type == WS_EVT_DATA){
     doc.clear();
     DeserializationError error = deserializeJson(doc, data);
-    if (error)
-        Serial.println(F("Failed to read file, using default configuration"));
-
+    if (error){
+        debugInfo(F("Failed to read file, using default configuration"));
+        return;
+    }
     auto subInfo = parseMsg();
     auto iter = storeEvents.find(subInfo);
     if (iter != storeEvents.end()) {
-        Serial.println("Handle :" + getStrEventType(subInfo.type) + " / " + String(subInfo.id));
+        debugInfo("New event:" + getStrEventType(subInfo.type));
        (*iter->second)();
     }else{
-      Serial.println("No any handlers for event '" + getStrEventType(subInfo.type) + "'");
+      debugInfo("No any handlers for event '" + getStrEventType(subInfo.type) + "'");
     }
      
 
@@ -77,7 +80,7 @@ void cek::ws_bus::notify(eEventType type, uint msg)
   ws.textAll(buf);
 }
 
-void cek::ws_bus::notify(eEventType type, String msg)
+void cek::ws_bus::notify(eEventType type, const String& msg)
 {
   DynamicJsonDocument doc(128);
   doc["type"] = getStrEventType(type);
@@ -128,7 +131,12 @@ void cek::ws_bus::registerHandler(String url){
     });
 }
 
-
+void cek::ws_bus::debugInfo(const String& msg)
+{
+  Serial.println(msg);
+  if(enabledLog)
+    notify(eEventType::PrintLog, msg);
+}
 
 void cek::ws_bus::registerEventCallback(SubscibeId id, EventCallback callback)
 {
