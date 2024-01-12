@@ -32,10 +32,11 @@ const connectWsApi = () => {
   };
 
   wsClient.onmessage = function(event) {
-    console.log("new message : " + event.data)
-    const msg = JSON.parse(event.data).data;
+    const msg = JSON.parse(event.data);
     for (let listener of mapCallbackEvents) {
-      listener[1](msg); 
+      if (listener[0] === msg.type){
+        listener[1](msg.data); 
+      }
     }
   };
 

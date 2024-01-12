@@ -1,9 +1,14 @@
 import './gsm'
 import './sensors'
-import { onclick } from "./dom";
+import { onclick, addRow } from "./dom";
 
-import  {requestUpdate, wsEvents} from './ws'
+import  {regOnMessage, requestUpdate, wsEvents} from './ws'
 
 onclick('#esp_restart_btn', () => {
     requestUpdate(wsEvents.device.RestartDevice);
+});
+
+
+regOnMessage(wsEvents.device.PrintLog, (msg) => {
+    addRow("#esp32Log", msg);
 });

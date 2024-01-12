@@ -5,10 +5,14 @@ const gsmEvents = {
     UpdateBalance: 'GsmUpdateBalance',
     UpdateSignalQuality: 'GsmUpdateSignalQuality',
     SendSMS: 'GsmSendSMS',
-    CallNumber: 'GsmCallNumber'
+    CallNumber: 'GsmCallNumber',
+    NetworkInfo: 'GsmNetworkInfo',
 };
 
 const deviceEvents = {
+    EnableLog: 'EnableLog',
+    DisableLog: 'DisableLog',
+    PrintLog: 'PrintLog',
     RestartDevice: 'RestartDevice',
 };
 

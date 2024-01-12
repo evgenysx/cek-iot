@@ -35,4 +35,9 @@ const changeValue = (id, value) => {
   el.innerHTML = value;
 }
 
-export {onclick, changeValue}
+const addRow = (id, value) => {
+  const el = $(id);
+  el.innerHTML += '<p>' + value + '</p>';
+}
+
+export {onclick, changeValue, addRow}

@@ -18,8 +18,18 @@ regOnMessage(wsEvents.gsm.UpdateBattPercent, (msg) => {
     changeValue("#gsm_battery", msg);
 });
 
+regOnMessage(wsEvents.gsm.NetworkInfo, (msg) => {
+    console.log('GsmNetworkInfo ' + msg);
+});
+
+regOnMessage(wsEvents.gsm.UpdateSignalQuality, (msg) => {
+    console.log('UpdateSignalQuality ' + msg);
+});
+
+
 regOnOpen(() => {
     //requestUpdate(wsEvents.gsm.UpdateBattPercent);
     requestUpdate(wsEvents.gsm.UpdateStatus);
     requestUpdate(wsEvents.gsm.UpdateSignalQuality);
+    requestUpdate(wsEvents.gsm.NetworkInfo);
 });

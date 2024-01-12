@@ -14,8 +14,13 @@ enum class eEventType {
   GsmUpdateBattPercent,
   GsmSendSMS,
   GsmCallNumber,
+  GsmNetworkInfo,
   RelayToggle,
-
+  // вывод отладочной информации
+  EnableLog,
+  DisableLog,
+  PrintLog,
+  // перезагрузка устройства
   RestartDevice,
   NUM_EVENTS
 };
