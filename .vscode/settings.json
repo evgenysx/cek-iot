@@ -51,5 +51,8 @@
         "stdexcept": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp"
-    }
+    },
+    "workbench.colorCustomizations": {       // Can customize each aspect
+    "tab.activeBackground": "#7e2e3f",
+},
 }
