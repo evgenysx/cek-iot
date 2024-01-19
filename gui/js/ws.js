@@ -11,7 +11,7 @@ let setCallbackOnOpen = new Set();
 var wsClient;
 
 const connectWsApi = () => {
-  wsClient = new WebSocket("ws://" + /*window.location.host*/ "192.168.3.89" + "/ws");
+  wsClient = new WebSocket("ws://" + /*window.location.host*/ "192.168.3.251" + "/ws");
 
   wsClient.onopen = function() {
     console.log("Ws-cоединение установлено.");
@@ -53,8 +53,10 @@ const notifyToggleCheckbox = (el) => {
 
 }
 
-const requestUpdate = (msg) => {
+const requestUpdate = (msg, data) => {
   let event = {type: msg}
+  if(data)
+    event.data = data;
   wsClient.send(JSON.stringify(event));
 
 }

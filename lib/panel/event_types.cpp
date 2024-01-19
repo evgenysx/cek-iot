@@ -2,10 +2,15 @@
 #include <map>
 
 
-cek::ws_bus::EventMsg::EventMsg(eEventType type, String data)
+cek::ws_bus::EventMsg::EventMsg(eEventType type)
 {
     this->type = type;
-    this->data = data;
+    this->id = noSelectedId;
+}
+
+cek::ws_bus::EventMsg::EventMsg()
+{
+  id = noSelectedId;
 }
 
 String strEventType[] PROGMEM = {
@@ -18,6 +23,8 @@ String strEventType[] PROGMEM = {
   "GsmCallNumber",
   "GsmNetworkInfo",
   "GsmGetLocation",
+  "GsmRestartModem",
+  "GsmATCmd",
   "RelayToggle",
   "EnableLog",
   "DisableLog",

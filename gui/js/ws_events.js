@@ -8,6 +8,8 @@ const gsmEvents = {
     CallNumber: 'GsmCallNumber',
     NetworkInfo: 'GsmNetworkInfo',
     GsmGetLocation: 'GsmGetLocation',
+    RestartModem: 'GsmRestartModem',
+    GsmATCmd: 'GsmATCmd',
 };
 
 const deviceEvents = {

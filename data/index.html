@@ -16,20 +16,17 @@
     <input type="radio" name="inset" value="" id="tab_2">
     <label for="tab_2">Датчики</label>
 
-    <input type="radio" name="inset" value="" id="tab_2">
-    <label for="tab_2">Прошивка</label>
+    <input type="radio" name="inset" value="" id="tab_3">
+    <label for="tab_3">Устройство</label>
 
     <div id="txt_1">
-
       <div class="form_auth_block">
-        <div id="esp32Log"></div>
-
-        <button class="button" id="esp_restart_btn" >Перезагрузка</button>
         <div class="form_auth_block_content">
           <label id="gsm_battery">Заряд</label>
           <label id="gsm_status">Статус ...</label>
           <label>Баланс сим-карты </label>
  
+          <button class="button" id="gsm_restart_btn" >Перезагрузка GSM</button>
           <label class="toggle">
             <input id="gsm_gprs_enabled" class="toggle-checkbox" type="checkbox">
             <div class="toggle-switch"></div>
@@ -37,12 +34,13 @@
           </label>
           
           <p class="form_auth_block_head_text">Сервис отправки СМС</p>
+          <button class="button" id="gsm_sendsms_btn">Отправить</button>
           <form class="form_auth_style" method="POST" action="/api/sendSMS">
-            <label>Номер телефона</label>
+           
             <input type="phone" name="phone" placeholder="+79201234567" required >
-            <label>Текст смс</label>
-            <input type="password" name="auth_pass" placeholder="Введите текст смс" required >
-            <button class="button" type="submit" name="form_auth_submit">Отправить</button>
+            
+            <input type="text" name="auth_pass" placeholder="Введите текст смс" required >
+            
           </form>
           
         </div>
@@ -56,6 +54,11 @@
         <span class="toggle-label">Реле #23</span>
       </label>
         
+    </div>
+
+    <div id="txt_3">
+      <button class="button" id="esp_restart_btn" >Перезагрузка</button>
+      <div id="esp32Log"></div>  
     </div>
     
 </div>

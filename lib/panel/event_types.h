@@ -3,6 +3,7 @@
 #define _CEK_ESP_WS_TYPES_H_
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 
 namespace cek::ws_bus {
 
@@ -16,6 +17,8 @@ enum class eEventType {
   GsmCallNumber,
   GsmNetworkInfo,
   GsmGetLocation,
+  GsmRestartModem,
+  GsmATCmd,
   // реле
   RelayToggle,
   // вывод отладочной информации
@@ -31,10 +34,9 @@ String getStrEventType(eEventType type);
 eEventType getEventTypeByStr(String);
 void initEventMap();
 
+static const int noSelectedId = -1;
 
 struct SubscibeId {
-  static const int noSelectedId = -1;
-  
   eEventType type;
   int id;
 
@@ -50,15 +52,17 @@ struct SubscibeId {
   SubscibeId(eEventType type);
 };
 
+
 struct EventMsg {
   eEventType type;
   int id;
-  String data;
+  JsonObject data;
 
-  EventMsg(eEventType type, String data);
+  EventMsg(eEventType type);
+  EventMsg();
 };
 
-typedef void (*EventCallback) ();
+typedef void (*EventCallback) (JsonObject* data);
 
 };
 #endif
