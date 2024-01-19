@@ -12,7 +12,7 @@ bool initWifi(String ssid, String password);
 /**
   Точка доступа для сервисных действий
 */
-void initAPWifi(String uid);
+bool initAPWifi(String uid);
 
 #endif
 
