@@ -6,7 +6,7 @@
 cek::RelayOne relay23;
 
 using namespace cek::ws_bus;
-EventCallback RelayToggle = []() {
+EventCallback RelayToggle = [](JsonObject*) {
     Serial.println("RelayToggle");
     relay23.toogleRelay();
 };
