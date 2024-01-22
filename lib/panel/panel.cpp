@@ -19,14 +19,17 @@ bool enabledLog = true;
 
 #include "SPIFFS.h"
 
-DynamicJsonDocument doc(128);
 
-cek::ws_bus::SubscibeId parseMsg () {
+cek::ws_bus::EventMsg parseMsg (DynamicJsonDocument& doc) {
     const char* strType = doc["type"];
-    int id = cek::ws_bus::SubscibeId::noSelectedId; 
+    cek::ws_bus::EventMsg msg;   
     if(doc.containsKey("id"))
-      id = doc["id"];
-    return cek::ws_bus::SubscibeId(cek::ws_bus::getEventTypeByStr(strType), id);
+      msg.id = doc["id"];
+    msg.type = cek::ws_bus::getEventTypeByStr(strType);
+    if(doc.containsKey("data")){
+      msg.data = doc["data"].as<JsonObject>();
+    }
+    return msg;
 }
 
 void cek::ws_bus::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
@@ -34,19 +37,19 @@ void cek::ws_bus::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * clie
   if(type == WS_EVT_CONNECT){ 
     Serial.println("New ws client");
   } else if(type == WS_EVT_DATA){
-    doc.clear();
+    DynamicJsonDocument doc(128);
     DeserializationError error = deserializeJson(doc, data);
     if (error){
         debugInfo(F("Failed to read file, using default configuration"));
         return;
     }
-    auto subInfo = parseMsg();
-    auto iter = storeEvents.find(subInfo);
+    auto msgInfo = parseMsg(doc);
+    auto iter = storeEvents.find(cek::ws_bus::SubscibeId(msgInfo.type, msgInfo.id));
     if (iter != storeEvents.end()) {
-        debugInfo("New event:" + getStrEventType(subInfo.type));
-       (*iter->second)();
+        debugInfo("New event:" + getStrEventType(msgInfo.type) + " / "/* + msgInfo.data*/);
+       (*iter->second)(&msgInfo.data);
     }else{
-      debugInfo("No any handlers for event '" + getStrEventType(subInfo.type) + "'");
+      debugInfo("No any handlers for event '" + getStrEventType(msgInfo.type) + "'");
     }
      
 
@@ -123,13 +126,6 @@ void cek::ws_bus::startHttpServer(){
   server.begin();
 }
 
-
-void cek::ws_bus::registerHandler(String url){
-    server.on("/api/sendSMS", HTTP_POST, [](AsyncWebServerRequest *request){
-        Serial.println("/api/sendSMS");
-        request->send(200, "text/html", "test");
-    });
-}
 
 void cek::ws_bus::debugInfo(const String& msg)
 {
