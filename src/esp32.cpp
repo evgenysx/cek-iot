@@ -10,7 +10,7 @@ void cek::restartDevice(int delaySec){
     ESP.restart();
 }
 
-cek::ws_bus::EventCallback OnRestartDevice = []() {
+cek::ws_bus::EventCallback OnRestartDevice = [](JsonObject*) {
     cek::restartDevice(0);
 };
 
