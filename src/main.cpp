@@ -54,9 +54,10 @@ void setup() {
     Serial.println("Загружена прошивка " + settings.name + " / версия " + String(settings.version));
   }
   auto uid = String(ESP.getEfuseMac() >> 30);
-  //initAPWifi(uid);
 
-  initWifi(settings.wifis[0].ssid, settings.wifis[0].pwd);
+  if(!initWifi(settings.wifis[0].ssid, settings.wifis[0].pwd)){
+    initAPWifi(uid);
+  }
   cek::ws_bus::startHttpServer();
   cek::sensors::init();
   cek::initDevice();
@@ -68,12 +69,6 @@ void setup() {
   //registerHandler("/api/sendSMS", )
   // gsmClient = GsmCustomClient::create(Serial2);
 
-  // cek::ws_bus::notify(cek::ws_bus::eEventType::GsmUpdateBattPercent, gsmClient->getBattPercent());
-  // gsmClient->initGPRS();
-  // auto bal = gsmClient->getBalance("*100#");
-  // Serial.println("balance = " + bal);
-  // gsmClient->sendSMS("+79081608348", "Test esp32");
-  //gsmClient->initGPRS();
 
   //mqttGprsClient.setClient(getGsmClient());
   // delay(3000);
