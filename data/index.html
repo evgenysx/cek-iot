@@ -34,14 +34,10 @@
           </label>
           
           <p class="form_auth_block_head_text">Сервис отправки СМС</p>
-          <button class="button" id="gsm_sendsms_btn">Отправить</button>
-          <form class="form_auth_style" method="POST" action="/api/sendSMS">
-           
-            <input type="phone" name="phone" placeholder="+79201234567" required >
+          <button class="button" id="gsm_sendsms_btn">Отправить</button>           
+            <input type="phone" id="txt_pnone_sms" name="phone" placeholder="+79201234567" required >      
+            <input type="text" id="txt_text_sms" name="auth_pass" placeholder="Введите текст смс" required >
             
-            <input type="text" name="auth_pass" placeholder="Введите текст смс" required >
-            
-          </form>
           
         </div>
       </div>

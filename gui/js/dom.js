@@ -40,4 +40,8 @@ const addRow = (id, value) => {
   el.innerHTML += '<p>' + value + '</p>';
 }
 
-export {onclick, changeValue, addRow}
+const getValue = (id) => {
+  const el = $(id);
+  return el.value;
+}
+export {onclick, changeValue, getValue, addRow}

@@ -75,37 +75,40 @@ cek::ws_bus::EventCallback OnGsmATCmd = [](JsonObject* data) {
 };
 
 cek::ws_bus::EventCallback OnNetworkInfo = [](JsonObject*) {
-    DynamicJsonDocument doc(128);
+    constexpr int bufSz = 256;
+    DynamicJsonDocument doc(bufSz);
     doc["network"] = cek::getModule()->isNetworkConnected();
     doc["reg"] = cek::getModule()->getRegistrationStatus();
     doc["operator"] = cek::getModule()->getOperatorName();
     doc["signal"] = cek::getModule()->getSignalQuality();
 
+    
     //const size_t len = measureJson(doc);
-    char buf[128];
+    char buf[bufSz];
     serializeJson(doc, buf);
-
+    Serial.println(buf);
     notify(eEventType::GsmNetworkInfo, buf);
 };
 
 bool cek::loadGSMModule()
 {
-    while (!getModule()->isDeviceConnected()){
-        Serial.println ("GSM not yet connected");
-        delay(2000);
-    }
-    //
-    // .. нужно проверять сеть
-    //
     restartModem();
 
+    while (!getModule()->isDeviceConnected()){
+        Serial.println ("GSM not yet connected");
+        notify(eEventType::GsmNetworkInfo, "{\"reg\":-1}");
+        delay(2000);
+    }
+
     // регистрация обработчиков
+        //
+    registerEventCallback(SubscibeId(eEventType::GsmNetworkInfo), OnNetworkInfo);
     registerEventCallback(SubscibeId(eEventType::GsmUpdateStatus), OnStatusUpdate);
     registerEventCallback(SubscibeId(eEventType::GsmUpdateSignalQuality), OnSignalQualityUpdate);
     registerEventCallback(SubscibeId(eEventType::GsmUpdateBattPercent), OnBatteryUpdate);
     registerEventCallback(SubscibeId(eEventType::GsmUpdateBalance), OnBalanceUpdate);
     registerEventCallback(SubscibeId(eEventType::GsmSendSMS), OnSendSMS);
-    registerEventCallback(SubscibeId(eEventType::GsmNetworkInfo), OnNetworkInfo);
+    
     registerEventCallback(SubscibeId(eEventType::GsmGetLocation), OnGetLocation);
     registerEventCallback(SubscibeId(eEventType::GsmRestartModem), OnRestartModem);
     registerEventCallback(SubscibeId(eEventType::GsmATCmd), OnGsmATCmd);
@@ -113,8 +116,10 @@ bool cek::loadGSMModule()
     while (!getModule()->isNetworkConnected()){
          
           Serial.print ("." + String(getModule()->getRegistrationStatus()) + String(getModule()->getSignalQuality()) );
-          delay(2000);
+          OnNetworkInfo(nullptr);
+          delay(2000);       
     }
+    OnNetworkInfo(nullptr);
     Serial.println("READY = " + String(getModule()->getRegistrationStatus()));
     return true;
 }

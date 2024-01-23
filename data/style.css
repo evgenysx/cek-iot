@@ -19,7 +19,7 @@ html {
     color: white;
     padding: 16px 40px;
     text-decoration: none;
-    font-size: 30px;
+    font-size: 20px;
     margin: 2px;
     cursor: pointer;
   }
@@ -39,7 +39,7 @@ input:checked+.slider:before {-webkit-transform: translateX(25px); -ms-transform
 */
 .form_auth_block{
     width: 500px;
-    height: 500px;
+    /* height: 500px; */
     margin: 0 auto;
     background: rgb(212, 206, 208);
     background-size: cover;
