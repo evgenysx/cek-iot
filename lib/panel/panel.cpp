@@ -85,14 +85,14 @@ void cek::ws_bus::notify(eEventType type, uint msg)
 
 void cek::ws_bus::notify(eEventType type, const String& msg)
 {
-  DynamicJsonDocument doc(128);
+  constexpr int szNotify = 256;
+  DynamicJsonDocument doc(szNotify);
   doc["type"] = getStrEventType(type);
   doc["data"] = msg;
 
   //const size_t len = measureJson(doc);
-  char buf[128];
+  char buf[szNotify];
   serializeJson(doc, buf);
-  Serial.println(buf);
   ws.textAll(buf);
 }
 
