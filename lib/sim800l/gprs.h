@@ -22,12 +22,15 @@ public:
     // определение Оператора связи
     void detectOperatorIMSI();
     const String getOperatorName();
+    bool sendSMSinPDU(String phone, String message);
     
 private:
     GsmCustomClient(Stream& stream);
     void setOperator(eGsmOperator type);
     
-    
+    // sms helpers
+    void getPDUPack(String *phone, String *message, String *result, int *PDUlen);
+    String getDAfield(String *phone, bool fullnum);
     // Tele2 / Yota / ...
     eGsmOperator typeOperator;
     TinyGsmClient client;

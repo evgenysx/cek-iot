@@ -55,7 +55,7 @@ cek::ws_bus::EventCallback OnSendSMS = [](JsonObject* data) {
         notify(eEventType::GsmSendSMS, "too long sms");
         return;
     }
-    bool result = cek::getModule()->sendSMS(to, text);
+    bool result = cek::getModule()->sendSMSinPDU(to, text);
     notify(eEventType::GsmSendSMS, String(result));
 };
 
