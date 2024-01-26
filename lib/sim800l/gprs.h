@@ -22,7 +22,7 @@ public:
     // определение Оператора связи
     void detectOperatorIMSI();
     const String getOperatorName();
-    bool sendSMSinPDU(String phone, String message);
+    int sendSMSinPDU(String phone, String message);
     
 private:
     GsmCustomClient(Stream& stream);

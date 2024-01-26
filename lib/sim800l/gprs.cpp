@@ -158,7 +158,7 @@ String GsmCustomClient::getUSSD(const String& code)
    }
 }
 
-bool GsmCustomClient::sendSMSinPDU(String phone, String message)
+int GsmCustomClient::sendSMSinPDU(String phone, String message)
 {
   // ============ Подготовка PDU-пакета =============================================================================================
   // В целях экономии памяти будем использовать указатели и ссылки
@@ -178,14 +178,23 @@ bool GsmCustomClient::sendSMSinPDU(String phone, String message)
 
   // ============ Отправка PDU-сообщения ============================================================================================
   sendAT(GF("+CMGF=0"));
-  waitResponse();
+  if (1 != waitResponse())
+    return 1;
+  // https://wiki.iarduino.ru/page/a6_gprs_at/#AT_CMGS
   sendAT(GF("+CMGS=" + (String)PDUlen));
-  waitResponse();
+  if (1 != waitResponse(GSM_NL)){
+    stream.write(0x1B);  // 0x1B  - сообщение не будет отправлено
+    stream.flush();
+    return 2;
+  }
   stream.print(PDUPack);  // Actually send the message
   stream.write(0x1A);  // Terminate the message
   stream.flush();
+  // отправка может идти долго
+  if (1 != waitResponse(10000))
+    return 3;
   
-  return waitResponse() == 1;
+  return 0;
 }
 
 void GsmCustomClient::getPDUPack(String *phone, String *message, String *result, int *PDUlen)
