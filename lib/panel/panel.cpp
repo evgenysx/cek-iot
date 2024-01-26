@@ -18,7 +18,22 @@ bool enabledLog = true;
 
 
 #include "SPIFFS.h"
+#include <mdns.h>
 
+void start_mdns_service()
+{
+   // Инициализация службы mDNS:
+   esp_err_t err = mdns_init();
+   if (err) {
+      printf("MDNS Init failed: %d\n", err);
+      return;
+   }
+ 
+   // Установка hostname:
+   mdns_hostname_set("cek-sms");
+   // Установка default instance:
+   mdns_instance_name_set("Sms gateway cek.ru");
+}
 
 cek::ws_bus::EventMsg parseMsg (DynamicJsonDocument& doc) {
     const char* strType = doc["type"];
@@ -111,6 +126,10 @@ void cek::ws_bus::startHttpServer(){
     request->send(SPIFFS, "/css/switch.css", "text/css");
   });
 
+  server.on("/css/modal.css", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/css/modal.css", "text/css");
+  });
+
   server.on("/dist/bundle.js", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/dist/bundle.js", "application/javascript");
   });
@@ -124,6 +143,8 @@ void cek::ws_bus::startHttpServer(){
   SPIFFS.begin();
   // Start the server
   server.begin();
+  // регистрация по имени
+  start_mdns_service();
 }
 
 
