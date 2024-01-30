@@ -5,20 +5,22 @@
 import { onclick, changeValue, getValue } from "./dom";
 import {notifyToggleCheckbox, regOnMessage, regOnOpen, requestUpdate, wsEvents} from './ws'
 
-const parseRegStatus = (status) => {
-    if (status == -1)
-        return "Нет связи с модемом";
-    if (status == 0)
-        return "Не найдена gsm сеть";
-    if (status == 1)
-        return "Зарегистрирована";
-    if (status == 2)
-        return "Поиск сети";
-    if (status == 3)
-        return "Отказ регистрации в сети";
-    if (status == 4)
-        return "Обновление статуса";
-}
+// есть ли связь с модемом
+let isConnectedGsmModem = -1;
+let networkGsmInfo = {};
+
+
+onclick('#tab_gsm', () => {
+    requestUpdate(wsEvents.gsm.GsmEnableUpdateNetworkInfo, {value: true});
+});
+
+onclick('#tab_sensor', () => {
+    requestUpdate(wsEvents.gsm.GsmEnableUpdateNetworkInfo, {value: false});
+});
+
+onclick('#tab_device', () => {
+    requestUpdate(wsEvents.gsm.GsmEnableUpdateNetworkInfo, {value: false});
+});
 
 onclick('#gsm_gprs_enabled', notifyToggleCheckbox);
 onclick('#gsm_restart_btn', () => {
@@ -40,32 +42,63 @@ onclick('#gsm_sendsms_btn', () => {
     requestUpdate(wsEvents.gsm.SendSMS, {to: phone, text: txtSms});
 });
 
+const updateNetworkInfo = (netInfo) => {
+    networkGsmInfo =  {...networkGsmInfo, ...netInfo};
+    renderNetworkInfo();
+}
+const setNetworkInfo = (netInfo) => {
+    networkGsmInfo = netInfo;
+    renderNetworkInfo();
+}
 
-regOnMessage(wsEvents.gsm.UpdateStatus, (msg) => {
-    console.log('gsm_status changed ' + msg);
-    //changeValue("#gsm_status", msg);
+const renderNetworkInfo = () => {
+    let txtStatus = "Нет связи с модемом";
+    switch (networkGsmInfo.reg){     
+        case 0:
+            txtStatus = "Не найдена gsm сеть";
+            break;
+        case 1: 
+            txtStatus = networkGsmInfo.operator + " / " + networkGsmInfo.signal;
+            break;
+        case 2:
+            txtStatus = "Поиск сети " + networkGsmInfo.operator + " / " + networkGsmInfo.signal;
+            break;
+        case 3:
+            txtStatus = "Отказ регистрации " + networkGsmInfo.operator + " / " + networkGsmInfo.signal;
+            break;
+        case 4:
+            txtStatus = "Обновление статуса";
+            break;
+    }
+    changeValue("#gsm_status", txtStatus);
+}
+
+regOnMessage(wsEvents.gsm.UpdateStatus, (statusGsm) => {
+    if (isConnectedGsmModem != statusGsm){
+        // появилось соединение с модемом
+        if (statusGsm)
+            requestUpdate(wsEvents.gsm.NetworkInfo);
+        else{
+            // пропало соединение
+            updateNetworkInfo({"network": false});
+        }
+        console.log('gsm_status changed to ' + statusGsm); 
+    }
 });
 
 regOnMessage(wsEvents.gsm.UpdateBattPercent, (msg) => {
     console.log('GsmUpdateBattPercent ' + msg);
-    changeValue("#gsm_battery", "Заряд батареи " + msg + "%");
+    changeValue("#gsm_battery", "Заряд батареи " + msg + "мВ");
 });
 
 
 regOnMessage(wsEvents.gsm.NetworkInfo, (msg) => {
     let netInfo = JSON.parse(msg);
-    console.log(netInfo)
-    var info = "Поиск сети ...";
-    info = parseRegStatus(netInfo.reg);
-
-    if (netInfo.network){        
-        info += " / " + netInfo.operator + " / сигнал " + netInfo.signal;
-    }
-    changeValue("#gsm_status", info);
+    setNetworkInfo(netInfo);
 });
 
-regOnMessage(wsEvents.gsm.UpdateSignalQuality, (msg) => {
-    console.log('UpdateSignalQuality ' + msg);
+regOnMessage(wsEvents.gsm.UpdateSignalQuality, (signal) => {
+    updateNetworkInfo({signal:signal});
 });
 
 regOnMessage(wsEvents.gsm.GsmGetLocation, (msg) => {
@@ -77,10 +110,9 @@ regOnMessage(wsEvents.gsm.UpdateBalance, (msg) => {
 });
 
 regOnOpen(() => {
+    //requestUpdate(wsEvents.gsm.UpdateStatus);
     requestUpdate(wsEvents.gsm.UpdateBattPercent);
     //requestUpdate(wsEvents.gsm.UpdateStatus);
     requestUpdate(wsEvents.gsm.NetworkInfo);
-    //requestUpdate(wsEvents.gsm.GsmGetLocation);
-    //requestUpdate(wsEvents.gsm.UpdateBalance);
-    //requestUpdate(wsEvents.gsm.SendSMS);
+    requestUpdate(wsEvents.gsm.GsmEnableUpdateNetworkInfo, {value: true});
 });
