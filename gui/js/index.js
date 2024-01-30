@@ -1,3 +1,9 @@
+// стили
+import "../css/style.css";
+import "../css/modal.css";
+import "../css/switch.css";
+
+//###
 import './gsm'
 import './sensors'
 import { onclick, addRow } from "./dom";

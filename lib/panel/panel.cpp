@@ -118,16 +118,8 @@ void cek::ws_bus::startHttpServer(){
     request->send(SPIFFS, "/index.html");
   });
 
-  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/style.css", "text/css");
-  });
-
-  server.on("/css/switch.css", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/css/switch.css", "text/css");
-  });
-
-  server.on("/css/modal.css", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/css/modal.css", "text/css");
+  server.on("/dist/main.css", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/dist/main.css", "text/css");
   });
 
   server.on("/dist/bundle.js", HTTP_GET, [](AsyncWebServerRequest *request){
