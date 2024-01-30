@@ -19,6 +19,7 @@ enum class eEventType {
   GsmGetLocation,
   GsmRestartModem,
   GsmATCmd,
+  GsmEnableUpdateNetworkInfo,
   // реле
   RelayToggle,
   // вывод отладочной информации

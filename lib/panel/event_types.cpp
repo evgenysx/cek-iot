@@ -25,6 +25,7 @@ String strEventType[] PROGMEM = {
   "GsmGetLocation",
   "GsmRestartModem",
   "GsmATCmd",
+  "GsmEnableUpdateNetworkInfo",
   "RelayToggle",
   "EnableLog",
   "DisableLog",

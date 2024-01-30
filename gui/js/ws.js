@@ -21,6 +21,7 @@ const connectWsApi = () => {
   };
 
   wsClient.onclose = function(event) {
+    console.log("closed ws-connect",event);
     setTimeout(() => {
        if (!event.wasClean){
         console.log("try ws-reconnect");

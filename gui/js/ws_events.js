@@ -10,6 +10,7 @@ const gsmEvents = {
     GsmGetLocation: 'GsmGetLocation',
     RestartModem: 'GsmRestartModem',
     GsmATCmd: 'GsmATCmd',
+    GsmEnableUpdateNetworkInfo: 'GsmEnableUpdateNetworkInfo',
 };
 
 const deviceEvents = {
