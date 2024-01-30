@@ -11,21 +11,23 @@
 <body>
   <h2>Панель управления Cek.iot</h2>
   <div class="tabs">
-    <input type="radio" name="inset" value="" id="tab_1" checked>
-    <label for="tab_1">GSM</label>
+    <input type="radio" name="inset" value="" id="tab_gsm" checked>
+    <label for="tab_gsm">GSM</label>
 
-    <input type="radio" name="inset" value="" id="tab_2">
-    <label for="tab_2">Датчики</label>
+    <input type="radio" name="inset" value="" id="tab_sensor">
+    <label for="tab_sensor">Датчики</label>
 
-    <input type="radio" name="inset" value="" id="tab_3">
-    <label for="tab_3">Устройство</label>
+    <input type="radio" name="inset" value="" id="tab_device">
+    <label for="tab_device">Устройство</label>
 
     <div id="txt_1">
       <div class="form_auth_block">
         <div class="form_auth_block_content">
           <label id="gsm_battery">Заряд</label>
-          <label id="gsm_status">Статус ...</label>
-          <label>Баланс сим-карты </label>
+          <label id="gsm_status"></label>
+          <label id="gsm_balance">Баланс сим-карты 
+            <button class="button" id="gsm_balance_btn" >Обновить</button>
+          </label>
  
           <button class="button" id="gsm_restart_btn" >Перезагрузка GSM</button>
           <label class="toggle">
@@ -36,7 +38,7 @@
           
           <p class="form_auth_block_head_text">Сервис отправки СМС</p>
           <button class="button" id="gsm_sendsms_btn">Отправить</button>           
-            <input type="phone" id="txt_pnone_sms" name="phone" placeholder="+79201234567" required >      
+            <input type="phone" id="txt_pnone_sms" name="phone" placeholder="+79201234567" value="+79xxx" required >  
             <input type="text" id="txt_text_sms" name="auth_pass" placeholder="Введите текст смс" required >
             
           

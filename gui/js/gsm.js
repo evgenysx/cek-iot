@@ -42,6 +42,10 @@ onclick('#gsm_sendsms_btn', () => {
     requestUpdate(wsEvents.gsm.SendSMS, {to: phone, text: txtSms});
 });
 
+onclick('#gsm_balance_btn', () => {
+    requestUpdate(wsEvents.gsm.UpdateBalance);
+});
+
 const updateNetworkInfo = (netInfo) => {
     networkGsmInfo =  {...networkGsmInfo, ...netInfo};
     renderNetworkInfo();
@@ -106,13 +110,12 @@ regOnMessage(wsEvents.gsm.GsmGetLocation, (msg) => {
 });
 
 regOnMessage(wsEvents.gsm.UpdateBalance, (msg) => {
-    console.log('UpdateBalance ' + msg);
+    changeValue("#gsm_balance", msg);
 });
 
 regOnOpen(() => {
     //requestUpdate(wsEvents.gsm.UpdateStatus);
     requestUpdate(wsEvents.gsm.UpdateBattPercent);
-    //requestUpdate(wsEvents.gsm.UpdateStatus);
     requestUpdate(wsEvents.gsm.NetworkInfo);
     requestUpdate(wsEvents.gsm.GsmEnableUpdateNetworkInfo, {value: true});
 });
