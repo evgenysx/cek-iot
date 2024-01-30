@@ -23,10 +23,15 @@ public:
     void detectOperatorIMSI();
     const String getOperatorName();
     int sendSMSinPDU(String phone, String message);
-    
+    bool restart();
+
+    const RegStatus getRegStatus();
+    void setRegStatus(RegStatus status);
+    void setOperator(eGsmOperator type);
+
 private:
     GsmCustomClient(Stream& stream);
-    void setOperator(eGsmOperator type);
+    
     
     // sms helpers
     void getPDUPack(String *phone, String *message, String *result, int *PDUlen);
@@ -36,6 +41,8 @@ private:
     TinyGsmClient client;
 
     const String getAPN();
+
+    RegStatus gsmRegStatus;
 };
 
 #endif

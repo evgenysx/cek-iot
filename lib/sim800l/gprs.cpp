@@ -12,6 +12,7 @@
 
 GsmCustomClient::GsmCustomClient(Stream& stream) : TinyGsm(stream){
   client.init(this);
+  gsmRegStatus = RegStatus::REG_NO_RESULT;
 }
 
 void GsmCustomClient::setOperator(eGsmOperator type)
@@ -195,6 +196,24 @@ int GsmCustomClient::sendSMSinPDU(String phone, String message)
     return 3;
   
   return 0;
+}
+
+bool GsmCustomClient::restart()
+{
+  bool bRestart = TinyGsm::restart();
+  setRegStatus(RegStatus::REG_NO_RESULT);
+  setOperator(eGsmOperator::NotSelected);
+  return bRestart;
+}
+
+const RegStatus GsmCustomClient::getRegStatus()
+{
+    return gsmRegStatus;
+}
+
+void GsmCustomClient::setRegStatus(RegStatus status)
+{
+  gsmRegStatus = status;
 }
 
 void GsmCustomClient::getPDUPack(String *phone, String *message, String *result, int *PDUlen)
