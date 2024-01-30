@@ -9,6 +9,8 @@ namespace cek {
 bool loadGSMModule();
 bool unloadGSMModule();
 
+void GsmNetworkLoop();
+
 GsmCustomClient* getModule();
 } // end namespace 
 #endif

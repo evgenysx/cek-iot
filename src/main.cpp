@@ -85,6 +85,7 @@ void setup() {
 }
 
 void loop() {
+  cek::GsmNetworkLoop();
   //updateSerial();
   //gprsLoop();
 

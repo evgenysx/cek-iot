@@ -5,11 +5,10 @@ using namespace cek::ws_bus;
 
 GsmCustomClient* gsmClient;
 
-bool restartModem(){
-    bool bRestart = cek::getModule()->restart();
-    cek::getModule()->detectOperatorIMSI();
-    return bRestart;
-}
+// требуется ли автообновление статуса GSM сети
+bool enableGsmUpdateStatus = true;
+
+bool restartModem();
 
 bool cek::unloadGSMModule()
 {
@@ -31,12 +30,12 @@ cek::ws_bus::EventCallback OnBalanceUpdate = [](JsonObject*) {
 };
 
 cek::ws_bus::EventCallback OnStatusUpdate = [](JsonObject*) {
-    auto info = cek::getModule()->getModemInfo();
+    auto info = cek::getModule()->isDeviceConnected();
     notify(eEventType::GsmUpdateStatus, info);
 };
 
 cek::ws_bus::EventCallback OnBatteryUpdate = [](JsonObject*) {    
-    notify(eEventType::GsmUpdateBattPercent, cek::getModule()->getBattPercent());
+    notify(eEventType::GsmUpdateBattPercent, cek::getModule()->getBattVoltage());
 };
 
 cek::ws_bus::EventCallback OnSignalQualityUpdate = [](JsonObject*) {
@@ -74,6 +73,12 @@ cek::ws_bus::EventCallback OnGsmATCmd = [](JsonObject* data) {
     // Serial.println("Response: " + String(res) + " / " + response);
 };
 
+cek::ws_bus::EventCallback OnGsmEnableUpdateNetworkInfo = [](JsonObject* data) {
+    bool value = (*data)["value"];
+    enableGsmUpdateStatus = value;
+};
+
+
 cek::ws_bus::EventCallback OnNetworkInfo = [](JsonObject*) {
     constexpr int bufSz = 256;
     DynamicJsonDocument doc(bufSz);
@@ -92,18 +97,13 @@ cek::ws_bus::EventCallback OnNetworkInfo = [](JsonObject*) {
 
 bool cek::loadGSMModule()
 {
-    restartModem();
-
-    while (!getModule()->isDeviceConnected()){
-        Serial.println ("GSM not yet connected");
-        notify(eEventType::GsmNetworkInfo, "{\"reg\":-1}");
-        delay(2000);
-    }
-
-    // регистрация обработчиков
-        //
-    registerEventCallback(SubscibeId(eEventType::GsmNetworkInfo), OnNetworkInfo);
     registerEventCallback(SubscibeId(eEventType::GsmUpdateStatus), OnStatusUpdate);
+    //
+    restartModem();
+    // регистрация обработчиков
+    //
+    registerEventCallback(SubscibeId(eEventType::GsmNetworkInfo), OnNetworkInfo);
+    
     registerEventCallback(SubscibeId(eEventType::GsmUpdateSignalQuality), OnSignalQualityUpdate);
     registerEventCallback(SubscibeId(eEventType::GsmUpdateBattPercent), OnBatteryUpdate);
     registerEventCallback(SubscibeId(eEventType::GsmUpdateBalance), OnBalanceUpdate);
@@ -112,14 +112,47 @@ bool cek::loadGSMModule()
     registerEventCallback(SubscibeId(eEventType::GsmGetLocation), OnGetLocation);
     registerEventCallback(SubscibeId(eEventType::GsmRestartModem), OnRestartModem);
     registerEventCallback(SubscibeId(eEventType::GsmATCmd), OnGsmATCmd);
-    
-    while (!getModule()->isNetworkConnected()){
-         
-          Serial.print ("." + String(getModule()->getRegistrationStatus()) + String(getModule()->getSignalQuality()) );
-          OnNetworkInfo(nullptr);
-          delay(2000);       
-    }
-    OnNetworkInfo(nullptr);
-    Serial.println("READY = " + String(getModule()->getRegistrationStatus()));
+    registerEventCallback(SubscibeId(eEventType::GsmEnableUpdateNetworkInfo), OnGsmEnableUpdateNetworkInfo);
+
     return true;
+}
+
+bool restartModem(){
+    debugInfo("Restart gsm module");
+    bool bRestart = cek::getModule()->restart();
+    return bRestart;
+}
+
+unsigned long start = millis();
+const auto MAX_GSM_NETWORK_IDLE_TIMEOUT = 2000;
+
+/**
+ * мониторинг состояния сети
+ * */ 
+void cek::GsmNetworkLoop(){
+  if (!enableGsmUpdateStatus)
+    return;
+  if (millis() - start < MAX_GSM_NETWORK_IDLE_TIMEOUT)
+    return;
+
+  auto regStatus = cek::getModule()->getRegistrationStatus();
+
+  Serial.println("networkLoop " + String(regStatus));
+  // check new status
+  if (regStatus != cek::getModule()->getRegStatus()) {
+    if(regStatus == RegStatus::REG_SEARCHING || regStatus == RegStatus::REG_OK_HOME ){
+        cek::getModule()->detectOperatorIMSI();
+    }else{
+        cek::getModule()->setOperator(eGsmOperator::NotSelected);
+    }
+    
+    OnNetworkInfo(nullptr);
+    cek::getModule()->setRegStatus(regStatus);
+  }
+  // уровень сигнала
+  if (regStatus == RegStatus::REG_SEARCHING || regStatus == RegStatus::REG_OK_HOME){
+    OnSignalQualityUpdate(nullptr);
+  }
+
+  start = millis();
 }
