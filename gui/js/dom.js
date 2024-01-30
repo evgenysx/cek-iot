@@ -44,4 +44,9 @@ const getValue = (id) => {
   const el = $(id);
   return el.value;
 }
-export {onclick, changeValue, getValue, addRow}
+
+const getAttr = (id, attr) => {
+  const el = $(id);
+  return el.getAttribute(attr);
+}
+export {onclick, changeValue, getValue, getAttr, addRow}
