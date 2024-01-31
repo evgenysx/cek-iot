@@ -23,8 +23,8 @@
         <div class="form_auth_block_content">
           <label id="gsm_battery">Заряд</label>
           <label id="gsm_status"></label>
-          <label id="gsm_balance">Баланс сим-карты 
-            <button class="button" id="gsm_balance_btn" >Обновить</button>
+          <label id="gsm_balance"> 
+            <button class="button" id="gsm_balance_btn" >Баланс сим-карты</button>
           </label>
  
           <button class="button" id="gsm_restart_btn" >Перезагрузка GSM</button>
@@ -54,20 +54,20 @@
     </div>
 
     <div id="txt_3">
-      <button class="button" id="esp_restart_btn" >Перезагрузка</button>
-      <div id="esp32Log"></div>  
-
-      <!-- Кнопка -->    
-    <div class="css-modal-target-container">
-      <a class="css-modal-open" href="#css-modal-target">Название кнопки</a>
-    </div>
+      <button class="button" id="esp_restart_btn">Перезагрузка</button>
+      <div id="esp32Log"></div>
+    
+      <!-- Кнопка -->
+      <div class="css-modal-target-container">
+        <a class="css-modal-open" href="#css-modal-target">Название кнопки</a>
+      </div>
     </div>
     
 
     <!-- Модальное окно -->    
     <div class="css-modal-target" id="css-modal-target">
       <div class="cmt">
-          <p>Текст в модальном окне</p>
+          <p id="mdl_text_val">Текст в модальном окне</p>
       </div>
       <a href="#close" class="css-modal-close"></a>    
     </div>

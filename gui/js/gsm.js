@@ -4,9 +4,9 @@
 
 import { onclick, changeValue, getValue } from "./dom";
 import {notifyToggleCheckbox, regOnMessage, regOnOpen, requestUpdate, wsEvents} from './ws'
+import {openModal} from './modal'
 
-// есть ли связь с модемом
-let isConnectedGsmModem = -1;
+// информация о состоянии сети
 let networkGsmInfo = {};
 
 
@@ -42,6 +42,9 @@ onclick('#gsm_sendsms_btn', () => {
     requestUpdate(wsEvents.gsm.SendSMS, {to: phone, text: txtSms});
 });
 
+/**
+ * Обновление баланса
+ */
 onclick('#gsm_balance_btn', () => {
     requestUpdate(wsEvents.gsm.UpdateBalance);
 });
@@ -101,7 +104,7 @@ regOnMessage(wsEvents.gsm.GsmGetLocation, (msg) => {
 });
 
 regOnMessage(wsEvents.gsm.UpdateBalance, (msg) => {
-    changeValue("#gsm_balance", msg);
+    openModal(msg);
 });
 
 regOnOpen(() => {
