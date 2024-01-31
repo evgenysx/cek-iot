@@ -78,16 +78,7 @@ const renderNetworkInfo = () => {
 }
 
 regOnMessage(wsEvents.gsm.UpdateStatus, (statusGsm) => {
-    if (isConnectedGsmModem != statusGsm){
-        // появилось соединение с модемом
-        if (statusGsm)
-            requestUpdate(wsEvents.gsm.NetworkInfo);
-        else{
-            // пропало соединение
-            updateNetworkInfo({"network": false});
-        }
-        console.log('gsm_status changed to ' + statusGsm); 
-    }
+    console.log('gsm_status changed to ' + statusGsm); 
 });
 
 regOnMessage(wsEvents.gsm.UpdateBattPercent, (msg) => {

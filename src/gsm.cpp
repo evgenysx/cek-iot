@@ -39,7 +39,6 @@ cek::ws_bus::EventCallback OnBatteryUpdate = [](JsonObject*) {
 };
 
 cek::ws_bus::EventCallback OnSignalQualityUpdate = [](JsonObject*) {
-    Serial.println(cek::getModule()->getSignalQuality());
     notify(eEventType::GsmUpdateSignalQuality, cek::getModule()->getSignalQuality());
 };
 
@@ -82,8 +81,8 @@ cek::ws_bus::EventCallback OnGsmEnableUpdateNetworkInfo = [](JsonObject* data) {
 cek::ws_bus::EventCallback OnNetworkInfo = [](JsonObject*) {
     constexpr int bufSz = 256;
     DynamicJsonDocument doc(bufSz);
-    doc["network"] = cek::getModule()->isNetworkConnected();
-    doc["reg"] = cek::getModule()->getRegistrationStatus();
+    //doc["network"] = cek::getModule()->isNetworkConnected();
+    doc["reg"] = cek::getModule()->getRegStatus();
     doc["operator"] = cek::getModule()->getOperatorName();
     doc["signal"] = cek::getModule()->getSignalQuality();
 
@@ -114,6 +113,9 @@ bool cek::loadGSMModule()
     registerEventCallback(SubscibeId(eEventType::GsmATCmd), OnGsmATCmd);
     registerEventCallback(SubscibeId(eEventType::GsmEnableUpdateNetworkInfo), OnGsmEnableUpdateNetworkInfo);
 
+    //запрет всех входящих звонков.
+    getModule()->sendAT("+GSMBUSY=0");
+    Serial.println(getModule()->waitResponse());
     return true;
 }
 
@@ -137,9 +139,11 @@ void cek::GsmNetworkLoop(){
 
   auto regStatus = cek::getModule()->getRegistrationStatus();
 
-  Serial.println("networkLoop " + String(regStatus));
+  Serial.println("networkLoop " + String(regStatus) + " / " + String(cek::getModule()->getRegStatus()));
   // check new status
   if (regStatus != cek::getModule()->getRegStatus()) {
+    cek::getModule()->setRegStatus(regStatus);
+
     if(regStatus == RegStatus::REG_SEARCHING || regStatus == RegStatus::REG_OK_HOME ){
         cek::getModule()->detectOperatorIMSI();
     }else{
@@ -147,10 +151,8 @@ void cek::GsmNetworkLoop(){
     }
     
     OnNetworkInfo(nullptr);
-    cek::getModule()->setRegStatus(regStatus);
-  }
-  // уровень сигнала
-  if (regStatus == RegStatus::REG_SEARCHING || regStatus == RegStatus::REG_OK_HOME){
+  }else if (regStatus == RegStatus::REG_SEARCHING || regStatus == RegStatus::REG_OK_HOME){
+    // статус сети не менялся - просто обновляем уровень сигнала
     OnSignalQualityUpdate(nullptr);
   }
 
