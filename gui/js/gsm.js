@@ -11,15 +11,15 @@ let networkGsmInfo = {};
 
 
 onclick('#tab_gsm', () => {
-    requestUpdate(wsEvents.gsm.GsmEnableUpdateNetworkInfo, {value: true});
+    setNetworkUpdateInfo(true);
 });
 
 onclick('#tab_sensor', () => {
-    requestUpdate(wsEvents.gsm.GsmEnableUpdateNetworkInfo, {value: false});
+    setNetworkUpdateInfo(false);
 });
 
 onclick('#tab_device', () => {
-    requestUpdate(wsEvents.gsm.GsmEnableUpdateNetworkInfo, {value: false});
+    setNetworkUpdateInfo(false);
 });
 
 onclick('#gsm_gprs_enabled', notifyToggleCheckbox);
@@ -48,6 +48,19 @@ onclick('#gsm_sendsms_btn', () => {
 onclick('#gsm_balance_btn', () => {
     requestUpdate(wsEvents.gsm.UpdateBalance);
 });
+
+window.onblur = function(event) {
+    setNetworkUpdateInfo(false);
+};
+
+window.onfocus = function(event) {
+    setNetworkUpdateInfo(true);
+};
+
+// включаем автообновление состояния сети
+const setNetworkUpdateInfo = (toUpdate) => {
+    requestUpdate(wsEvents.gsm.GsmEnableUpdateNetworkInfo, {value: toUpdate});
+};
 
 const updateNetworkInfo = (netInfo) => {
     networkGsmInfo =  {...networkGsmInfo, ...netInfo};
