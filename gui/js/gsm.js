@@ -25,7 +25,22 @@ onclick('#tab_device', () => {
 onclick('#gsm_gprs_enabled', notifyToggleCheckbox);
 onclick('#gsm_restart_btn', () => {
     console.log("restart gsm modem");
-    requestUpdate(wsEvents.gsm.RestartModem);
+    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CPMS?"});
+    requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMEE=2"});
+    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "A"});
+    requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CPMS?"});
+    requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CSDH?"});
+    
+    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CPMS=\"ME_P\""});
+    
+    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CNMI?"});
+    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CNMA=0"});
+    requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CNMI=2,2,0,1,0"});
+    // //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMGD=2,0"});
+    requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMGL=4"});
+    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMGL=\"ALL\""});
+    
+    
 });
 
 onclick('#gsm_sendsms_btn', () => {

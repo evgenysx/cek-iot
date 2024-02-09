@@ -1,5 +1,5 @@
 #include "gprs.h"
-#include "encode_str.hpp"
+#include "encode_str.h"
 
 // See
 //https://codius.ru/articles/GSM_%D0%BC%D0%BE%D0%B4%D1%83%D0%BB%D1%8C_SIM800L_%D1%87%D0%B0%D1%81%D1%82%D1%8C_3
@@ -10,14 +10,25 @@
 // Define the serial console for debug prints, if needed
 #define TINY_GSM_DEBUG SerialMon
 
-GsmCustomClient::GsmCustomClient(Stream& stream) : TinyGsm(stream){
-  client.init(this);
-  gsmRegStatus = RegStatus::REG_NO_RESULT;
+GsmCustomClient::GsmCustomClient(HardwareSerial &stream)
+    : ATStream(stream)
+{
+    gsmRegStatus = RegStatus::REG_NO_RESULT;
 }
 
 void GsmCustomClient::setOperator(eGsmOperator type)
 {
   typeOperator = type;
+}
+
+String GsmCustomClient::getBattVoltage()
+{
+    return String();
+}
+
+String GsmCustomClient::getGsmLocation()
+{
+    return String();
 }
 
 const String GsmCustomClient::getOperatorName()
@@ -62,101 +73,104 @@ void GsmCustomClient::detectOperatorIMSI(){
 }
 
 void GsmCustomClient::initGPRS() {
-  delay(500);
-  // Restart takes quite some time
-  // To skip it, call init() instead of restart()
-  SerialMon.println("Initializing modem...");
-  restart();
-  // init();
-  //setBaud(9600);
-  String modemInfo = getModemInfo();
-  SerialMon.print("Modem Info: ");
-  SerialMon.println(modemInfo);
+  // delay(500);
+  // // Restart takes quite some time
+  // // To skip it, call init() instead of restart()
+  // SerialMon.println("Initializing modem...");
+  // restart();
+  // // init();
+  // //setBaud(9600);
+  // String modemInfo = getModemInfo();
+  // SerialMon.print("Modem Info: ");
+  // SerialMon.println(modemInfo);
 
-  SerialMon.print("Waiting for network...");
-  if (!waitForNetwork()) {
-    SerialMon.println(" fail");
-    delay(10000);
-    return;
-  }
-  SerialMon.println(" success");
-  //
+  // SerialMon.print("Waiting for network...");
+  // if (!waitForNetwork()) {
+  //   SerialMon.println(" fail");
+  //   delay(10000);
+  //   return;
+  // }
+  // SerialMon.println(" success");
+  // //
   
   
-  if (isNetworkConnected()) {
-    SerialMon.println("Network connected ...");
-    SerialMon.println("Welcome to " + getOperatorName() + ". Signal quality = " + getSignalQuality());
-  }
+  // if (isNetworkConnected()) {
+  //   SerialMon.println("Network connected ...");
+  //   SerialMon.println("Welcome to " + getOperatorName() + ". Signal quality = " + getSignalQuality());
+  // }
 
-  auto apn = getAPN();
-  //GPRS connection parameters are usually set after network registration
-  SerialMon.print("Connecting to " + apn);
-  if (!gprsConnect(apn.c_str(), "", "")) {
-    SerialMon.println(" fail");
-    delay(10000);
-    return;
-  }
-  SerialMon.println(" success");
+  // auto apn = getAPN();
+  // //GPRS connection parameters are usually set after network registration
+  // SerialMon.print("Connecting to " + apn);
+  // if (!gprsConnect(apn.c_str(), "", "")) {
+  //   SerialMon.println(" fail");
+  //   delay(10000);
+  //   return;
+  // }
+  // SerialMon.println(" success");
 
-  if (isGprsConnected()) { SerialMon.println("GPRS connected"); }
+  // if (isGprsConnected()) { SerialMon.println("GPRS connected"); }
 }
 
 void GsmCustomClient::gprsLoop() {
-  // Make sure we're still registered on the network
-  if (!isNetworkConnected()) {
-    SerialMon.println("Network disconnected");
-    if (!waitForNetwork(180000L, true)) {
-      SerialMon.println(" fail");
-      delay(10000);
-      return;
-    }
-    if (isNetworkConnected()) {
-      SerialMon.println("Network re-connected");
-    }
-    // and make sure GPRS/EPS is still connected
-    if (!isGprsConnected()) {
-      auto apn = getAPN();
-      SerialMon.println("GPRS disconnected!");
-      SerialMon.print("Connecting to " + apn);
-      if (!gprsConnect(apn.c_str(), "", "")) {
-        SerialMon.println(" fail");
-        delay(10000);
-        return;
-      }
-      if (isGprsConnected()) { SerialMon.println("GPRS reconnected"); }
-    }
-  }
+  // // Make sure we're still registered on the network
+  // if (!isNetworkConnected()) {
+  //   SerialMon.println("Network disconnected");
+  //   if (!waitForNetwork(180000L, true)) {
+  //     SerialMon.println(" fail");
+  //     delay(10000);
+  //     return;
+  //   }
+  //   if (isNetworkConnected()) {
+  //     SerialMon.println("Network re-connected");
+  //   }
+  //   // and make sure GPRS/EPS is still connected
+  //   if (!isGprsConnected()) {
+  //     auto apn = getAPN();
+  //     SerialMon.println("GPRS disconnected!");
+  //     SerialMon.print("Connecting to " + apn);
+  //     if (!gprsConnect(apn.c_str(), "", "")) {
+  //       SerialMon.println(" fail");
+  //       delay(10000);
+  //       return;
+  //     }
+  //     if (isGprsConnected()) { SerialMon.println("GPRS reconnected"); }
+  //   }
+  // }
 }
 
 
 String GsmCustomClient::getUSSD(const String& code)
 {
+  return "not implemented";
    //return sendUSSD(code);
    String format = "GSM";
 
-    sendAT(GF("+CMGF=1"));
-    waitResponse();
-    sendAT(GF("+CSCS=\""), format, GF("\""));
-    waitResponse();
-    sendAT(GF("+CUSD=1,\""), code, GF("\""));
-    if (waitResponse() != 1) {
-      return "";
-    }
-    if (waitResponse(10000L, GF(GSM_NL "+CUSD:")) != 1) {
-      return "";
-    }
-    stream.readStringUntil('"');
-   String hex = stream.readStringUntil('"');
-   stream.readStringUntil(',');
-   int dcs = stream.readStringUntil('\n').toInt();
-
-   if (dcs == 15 && format == "HEX") {
-     return TinyGsmDecodeHex8bit(hex);
-   } else if (dcs == 72 && format == "HEX") {
-     return TinyGsmDecodeHex16bit(hex);
-   } else {
-     return UCS2ToString(hex);
-   }
+    //sendAT(GF("+CMGF=1"));
+    //waitResponse();
+    //sendAT(String(GF("+CSCS=\"")) + format + GF("\""));
+    //waitResponse();
+    //sendAT(String(GF("+CUSD=1,\"")) +  code + GF("\""));
+    // if (waitResponse() != 1) {
+    //   return "";
+    // }
+    // if (waitResponse(10000L, GF(GSM_NL "+CUSD:")) != 1) {
+    //   return "";
+    // }
+  //   stream.readStringUntil('"');
+  //  String hex = stream.readStringUntil('"');
+  //  stream.readStringUntil(',');
+  //  int dcs = stream.readStringUntil('\n').toInt();
+  //   auto delim = atResponse.value.indexOf(',');
+  //   auto hex = atResponse.value.substring(0, delim);
+  //   auto dcs = atResponse.value.substring(delim+1).toInt();
+  //  if (dcs == 15 && format == "HEX") {
+  //    return TinyGsmDecodeHex8bit(hex);
+  //  } else if (dcs == 72 && format == "HEX") {
+  //    return "no decode";
+  //  } else {
+  //    return UCS2ToString(hex);
+  //  }
 }
 
 int GsmCustomClient::sendSMSinPDU(String phone, String message)
@@ -178,32 +192,32 @@ int GsmCustomClient::sendSMSinPDU(String phone, String message)
   // Serial.println("PDU length without SCA:" + (String)PDUlen);
 
   // ============ Отправка PDU-сообщения ============================================================================================
-  sendAT(GF("+CMGF=0"));
-  if (1 != waitResponse())
-    return 1;
+  //sendAT(GF("+CMGF=0"));
+  // if (1 != waitResponse())
+  //   return 1;
   // https://wiki.iarduino.ru/page/a6_gprs_at/#AT_CMGS
-  sendAT(GF("+CMGS=" + (String)PDUlen));
-  if (1 != waitResponse(GSM_NL)){
-    stream.write(0x1B);  // 0x1B  - сообщение не будет отправлено
-    stream.flush();
-    return 2;
-  }
-  stream.print(PDUPack);  // Actually send the message
-  stream.write(0x1A);  // Terminate the message
-  stream.flush();
-  // отправка может идти долго
-  if (1 != waitResponse(10000))
-    return 3;
+  //sendAT(GF("+CMGS=" + (String)PDUlen));
+  // if (1 != waitResponse(GSM_NL)){
+  //   stream.write(0x1B);  // 0x1B  - сообщение не будет отправлено
+  //   stream.flush();
+  //   return 2;
+  // }
+  // stream.print(PDUPack);  // Actually send the message
+  // stream.write(0x1A);  // Terminate the message
+  // stream.flush();
+    // отправка может идти долго
+  // if (1 != waitResponse(10000))
+  //   return 3;
   
-  return 0;
+    return 0;
 }
 
 bool GsmCustomClient::restart()
 {
-  bool bRestart = TinyGsm::restart();
+  //bool bRestart = TinyGsm::restart();
   setRegStatus(RegStatus::REG_NO_RESULT);
   setOperator(eGsmOperator::NotSelected);
-  return bRestart;
+  return true;
 }
 
 const RegStatus GsmCustomClient::getRegStatus()
@@ -219,7 +233,7 @@ void GsmCustomClient::setRegStatus(RegStatus status)
 void GsmCustomClient::getPDUPack(String *phone, String *message, String *result, int *PDUlen)
 {
   // Поле SCA добавим в самом конце, после расчета длины PDU-пакета
-  *result += "01";                                // Поле PDU-type - байт 00000001b
+  *result += "21";                                // Поле PDU-type - байт 00000001b
   *result += "00";                                // Поле MR (Message Reference)
   *result += getDAfield(phone, true);             // Поле DA
   *result += "00";                                // Поле PID (Protocol Identifier)
@@ -266,5 +280,6 @@ GsmCustomClient *GsmCustomClient::create(HardwareSerial& serial)
 
 bool GsmCustomClient::isDeviceConnected()
 {
-    return testAT(100);
+    auto resp = sendAT("");
+    return resp.isOK();
 }

@@ -66,10 +66,12 @@ cek::ws_bus::EventCallback OnRestartModem = [](JsonObject*) {
 };
 
 cek::ws_bus::EventCallback OnGsmATCmd = [](JsonObject* data) {
-    //Serial.println("cmd: " + cmd);
-    // cek::getModule()->sendAT(cmd);
-    // auto res = cek::getModule()->waitResponse(10000L, response);
-    // Serial.println("Response: " + String(res) + " / " + response);
+    String cmd = (*data)["cmd"];
+    Serial.println("cmd: " + cmd);
+    cek::getModule()->sendAT(cmd, 10000L);
+    // String response;
+    // auto res = cek::getModule()->getATResponse();
+    // debugInfo("Response ATCmd: " + cmd + " / " + String(res.code) + " / " + res.value);
 };
 
 cek::ws_bus::EventCallback OnGsmEnableUpdateNetworkInfo = [](JsonObject* data) {
@@ -113,9 +115,6 @@ bool cek::loadGSMModule()
     registerEventCallback(SubscibeId(eEventType::GsmATCmd), OnGsmATCmd);
     registerEventCallback(SubscibeId(eEventType::GsmEnableUpdateNetworkInfo), OnGsmEnableUpdateNetworkInfo);
 
-    //запрет всех входящих звонков.
-    getModule()->sendAT("+GSMBUSY=0");
-    Serial.println(getModule()->waitResponse());
     return true;
 }
 
@@ -156,5 +155,16 @@ void cek::GsmNetworkLoop(){
     OnSignalQualityUpdate(nullptr);
   }
 
-  start = millis();
+    // String response;
+    // auto res = cek::getModule()->waitResponse(1000L, response, GF("CDS"));
+    // debugInfo("Unsolicited ATCmd: " + String(res) + " / " + response);
+    // res = cek::getModule()->waitResponse(1000L, response, GF("CMTI"));
+    // debugInfo("Unsolicited ATCmd: " + String(res) + " / " + response);
+
+    // if (Serial2.available()) {                     // Если есть, что считывать...
+    //     Serial.println(Serial2.readString());
+    // }
+
+  
+    start = millis();
 }

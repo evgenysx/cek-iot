@@ -1,16 +1,29 @@
 #ifndef _CEK_GPRS_SIM800L_H_
 #define _CEK_GPRS_SIM800L_H_
 
-// Select your modem:
-#define TINY_GSM_MODEM_SIM800
+#include "at.h"
 
-#include <TinyGsmClient.h>
-
+//
 enum class eGsmOperator {
     NotSelected = -1, Tele2, Yota, Beeline, MTC, MegaFon
 };
 
-class GsmCustomClient : public TinyGsm{
+static inline String TinyGsmDecodeHex8bit(String& instr) {
+  String result;
+  for (uint16_t i = 0; i < instr.length(); i += 2) {
+    char buf[4] = {
+        0,
+    };
+    buf[0] = instr[i];
+    buf[1] = instr[i + 1];
+    char b = strtol(buf, NULL, 16);
+    result += b;
+  }
+  return result;
+}
+
+
+class GsmCustomClient : public ATStream{
 public:
     void initGPRS();
     void gprsLoop();
@@ -26,22 +39,31 @@ public:
     bool restart();
 
     const RegStatus getRegStatus();
+    
+
     void setRegStatus(RegStatus status);
     void setOperator(eGsmOperator type);
 
+
+    String getBattVoltage();
+    String getGsmLocation();
+    
 private:
-    GsmCustomClient(Stream& stream);
+    GsmCustomClient(HardwareSerial& stream);
     
     
     // sms helpers
     void getPDUPack(String *phone, String *message, String *result, int *PDUlen);
     String getDAfield(String *phone, bool fullnum);
-    // Tele2 / Yota / ...
-    eGsmOperator typeOperator;
-    TinyGsmClient client;
+
+
+    //TinyGsmClient client;
 
     const String getAPN();
 
+private:   
+    // Tele2 / Yota / ...
+    eGsmOperator typeOperator;
     RegStatus gsmRegStatus;
 };
 

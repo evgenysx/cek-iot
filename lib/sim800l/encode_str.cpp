@@ -1,14 +1,6 @@
-#ifndef _CEK_ENCODE_STR_H_
-#define _CEK_ENCODE_STR_H_
-
-#include <WString.h>
-
+#include "encode_str.h"
 //
 // https://codius.ru/articles/GSM_модуль_SIM800L_часть_3
-
-unsigned int getCharSize(unsigned char b);
-unsigned int symbolToUInt(const String& bytes);
-String byteToHexString(byte i);
 
 unsigned char HexSymbolToChar(char c) {
   if      ((c >= 0x30) && (c <= 0x39)) return (c - 0x30);
@@ -132,5 +124,3 @@ String byteToHexString(byte i) { // Функция преобразования 
   hex.toUpperCase();
   return hex;
 }
-
-#endif
