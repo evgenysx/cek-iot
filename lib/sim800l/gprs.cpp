@@ -14,11 +14,77 @@ GsmCustomClient::GsmCustomClient(HardwareSerial &stream)
     : ATStream(stream)
 {
     gsmRegStatus = RegStatus::REG_NO_RESULT;
+    iRegStatusReq = 0;
 }
 
 void GsmCustomClient::setOperator(eGsmOperator type)
 {
   typeOperator = type;
+}
+
+bool GsmCustomClient::parseCmd(char *cmd)
+{
+  Serial.println("parseCmd " + String(cmd));
+  auto scmd = String(cmd);
+
+  if (!memcmp(cmd, "+CREG", 5))
+  {
+    
+
+    // scmd.substring(7,8);
+    // scmd.substring(9,10);
+    _OnRegStatus(scmd.substring(9, 10));
+  }
+  else if (!memcmp(cmd, "+CSQ", 4))
+  {
+    int delim = scmd.indexOf(',');
+    //auto signal =;
+    scmd.substring(delim + 1, 1);
+    _OnSignalQuality(scmd.substring(6, delim));
+  }
+  else if (!memcmp(cmd, "+CDS", 4))
+  {
+    // отчет об отправке СМС придет следующим сообщением
+  }
+  else if (!memcmp(cmd, "+CME ERROR", 10))
+  {
+    
+  }
+  else if (!memcmp(cmd, "OK", 2))
+  {
+   
+  }
+  else if (!memcmp(cmd, "ERROR", 5))
+  {
+  }
+  else if (!memcmp(cmd, "+USD", 1))
+  {
+     int delim = scmd.indexOf('"');
+     int delimEnd = scmd.indexOf('"',delim+1);
+
+    auto hex = scmd.substring(delim+1, delimEnd);
+    auto dcs = atoi(scmd.substring(delimEnd + 2).c_str());
+
+    _OnBalanceUpdate(hex, dcs);
+  }
+  else if (!memcmp(cmd, "+", 1))
+  {
+    Serial.println("income " + scmd);
+  }
+  else if (strlen(cmd) == 15)
+  {
+    _OnUpdateIMSI(scmd);
+  }
+  else if (strlen(cmd) == 66)
+  {
+    // example, 0791198994800721C6220C91197940005637902001917360229020019173602249
+    _OnSmsDeliveryReport(scmd);
+  }
+  else
+  {
+   
+  }
+  return true;
 }
 
 String GsmCustomClient::getBattVoltage()
@@ -29,6 +95,26 @@ String GsmCustomClient::getBattVoltage()
 String GsmCustomClient::getGsmLocation()
 {
     return String();
+}
+
+void GsmCustomClient::setOnUserRegStatus(OnUserRegStatus callback)
+{
+  _OnUserRegStatus = callback;
+}
+
+void GsmCustomClient::setOnUserSignalQuality(OnUserStrCallback callback)
+{
+  _OnUserSignalQuality = callback;
+}
+
+void GsmCustomClient::setOnUserBalanceUpdate(OnUserStrCallback callback)
+{
+  _OnUserBalanceUpdate = callback;
+}
+
+void GsmCustomClient::setOnUserNetworkUpdate(OnUserStr2Callback callback)
+{
+  _OnUserNetworkInfoUpdate = callback;
 }
 
 const String GsmCustomClient::getOperatorName()
@@ -45,19 +131,52 @@ const String GsmCustomClient::getOperatorName()
   }
 }
 
-const String GsmCustomClient::getAPN()
+void GsmCustomClient::_OnRegStatus(String&& status)
 {
-  if (typeOperator == eGsmOperator::Tele2){
-    return "internet.tele2.ru";
-  }else if (typeOperator == eGsmOperator::Yota){
-    return "internet.yota";
+  iRegStatusReq--;
+
+  auto regStatus = (RegStatus)atoi(status.c_str());
+  // обновляем данные об операторе
+  if(regStatus == RegStatus::REG_SEARCHING || regStatus == RegStatus::REG_OK_HOME ){
+    if (typeOperator == eGsmOperator::NotSelected){
+      updateIMSI();
+    }else{
+      updateSignalQuality();
+    }
+  }else{
+    setOperator(eGsmOperator::NotSelected);
   }
-  return "not selected APN";
+  //
+  setRegStatus(regStatus);
+  if (_OnUserRegStatus != NULL){
+    //_OnUserRegStatus(regStatus);
+    _OnNetworkInfoUpdate("reg", status);
+  }
 }
 
-// https://ru.wikipedia.org/wiki/IMSI
-void GsmCustomClient::detectOperatorIMSI(){
-  String imsi = getIMSI();
+void GsmCustomClient::_OnSignalQuality(String &&data)
+{
+  _OnNetworkInfoUpdate("signal", data);
+}
+
+void GsmCustomClient::_OnBalanceUpdate(String &data, int dcs)
+{
+  //http://codius.ru/articles/GSM_%D0%BC%D0%BE%D0%B4%D1%83%D0%BB%D1%8C_SIM800L_%D1%87%D0%B0%D1%81%D1%82%D1%8C_3
+ if (_OnUserBalanceUpdate != NULL){
+    _OnUserBalanceUpdate(UCS2ToString(data));
+  }
+}
+
+void GsmCustomClient::_OnNetworkInfoUpdate(String &&key, String &value)
+{
+   if (_OnUserNetworkInfoUpdate != NULL){
+    _OnUserNetworkInfoUpdate(key,value);
+  }
+}
+
+void GsmCustomClient::_OnUpdateIMSI(String &imsi)
+{
+  // https://ru.wikipedia.org/wiki/IMSI
   // Mobile Network Code
   const String mnc = imsi.substring(3,5);
   if (mnc.equals("11")){
@@ -69,7 +188,46 @@ void GsmCustomClient::detectOperatorIMSI(){
   }else{
     setOperator(eGsmOperator::NotSelected);
   }
+  auto net = getOperatorName();
+  _OnNetworkInfoUpdate("operator", net);
+}
 
+void GsmCustomClient::_OnSmsDeliveryReport(String &pdu)
+{
+  // https://smsconnexion.wordpress.com/2009/02/12/sms-pdu-formats-demystified/
+  // 0791198994800721 C6220C91197940005637902001917360229020019173602249
+  // 07 Length of the SMSC information.
+  // 91 Type of address of the SMSC.
+  // ...
+  const auto ln = pdu.length(); 
+  Serial.println(revertBytes(pdu.substring(ln-16, ln-4)));
+  if (pdu.substring(ln-2).equals("00")){
+    Serial.println("Success");
+  }
+}
+
+const String GsmCustomClient::getAPN()
+{
+  if (typeOperator == eGsmOperator::Tele2){
+    return "internet.tele2.ru";
+  }else if (typeOperator == eGsmOperator::Yota){
+    return "internet.yota";
+  }
+  return "not selected APN";
+}
+
+void GsmCustomClient::updateRegistrationStatus()
+{
+    if (iRegStatusReq++ > 2){
+      setRegStatus(RegStatus::REG_NO_RESULT);
+      iRegStatusReq = 0;
+    } 
+    sendAT(GF("+CREG?"));
+}
+
+void GsmCustomClient::updateBalance()
+{
+  getUSSD("*100#");
 }
 
 void GsmCustomClient::initGPRS() {
@@ -140,37 +298,12 @@ void GsmCustomClient::gprsLoop() {
 }
 
 
-String GsmCustomClient::getUSSD(const String& code)
+void GsmCustomClient::getUSSD(const String& code)
 {
-  return "not implemented";
-   //return sendUSSD(code);
-   String format = "GSM";
-
-    //sendAT(GF("+CMGF=1"));
-    //waitResponse();
-    //sendAT(String(GF("+CSCS=\"")) + format + GF("\""));
-    //waitResponse();
-    //sendAT(String(GF("+CUSD=1,\"")) +  code + GF("\""));
-    // if (waitResponse() != 1) {
-    //   return "";
-    // }
-    // if (waitResponse(10000L, GF(GSM_NL "+CUSD:")) != 1) {
-    //   return "";
-    // }
-  //   stream.readStringUntil('"');
-  //  String hex = stream.readStringUntil('"');
-  //  stream.readStringUntil(',');
-  //  int dcs = stream.readStringUntil('\n').toInt();
-  //   auto delim = atResponse.value.indexOf(',');
-  //   auto hex = atResponse.value.substring(0, delim);
-  //   auto dcs = atResponse.value.substring(delim+1).toInt();
-  //  if (dcs == 15 && format == "HEX") {
-  //    return TinyGsmDecodeHex8bit(hex);
-  //  } else if (dcs == 72 && format == "HEX") {
-  //    return "no decode";
-  //  } else {
-  //    return UCS2ToString(hex);
-  //  }
+  String format = "GSM";
+  sendAT(GF("+CMGF=1"));
+  sendAT(String(GF("+CSCS=\"")) + format + GF("\""));
+  sendAT(String(GF("+CUSD=1,\"")) + code + GF("\""));
 }
 
 int GsmCustomClient::sendSMSinPDU(String phone, String message)
@@ -188,28 +321,15 @@ int GsmCustomClient::sendSMSinPDU(String phone, String message)
 
   getPDUPack(ptrphone, ptrmessage, ptrPDUPack, ptrPDUlen);      // Функция формирующая PDU-пакет, и вычисляющая длину пакета без SCA
 
-  // Serial.println("PDU-pack: " + PDUPack);
-  // Serial.println("PDU length without SCA:" + (String)PDUlen);
+  Serial.println("PDU-pack: " + PDUPack);
+  Serial.println("PDU length without SCA:" + (String)PDUlen);
 
   // ============ Отправка PDU-сообщения ============================================================================================
-  //sendAT(GF("+CMGF=0"));
-  // if (1 != waitResponse())
-  //   return 1;
+  sendAT(GF("+CMGF=0"));
   // https://wiki.iarduino.ru/page/a6_gprs_at/#AT_CMGS
-  //sendAT(GF("+CMGS=" + (String)PDUlen));
-  // if (1 != waitResponse(GSM_NL)){
-  //   stream.write(0x1B);  // 0x1B  - сообщение не будет отправлено
-  //   stream.flush();
-  //   return 2;
-  // }
-  // stream.print(PDUPack);  // Actually send the message
-  // stream.write(0x1A);  // Terminate the message
-  // stream.flush();
-    // отправка может идти долго
-  // if (1 != waitResponse(10000))
-  //   return 3;
-  
-    return 0;
+  sendAT("+CMGS=" + (String)PDUlen, 100);
+  write(PDUPack + String(char(0x1A)));
+  return 0;
 }
 
 bool GsmCustomClient::restart()
@@ -280,6 +400,5 @@ GsmCustomClient *GsmCustomClient::create(HardwareSerial& serial)
 
 bool GsmCustomClient::isDeviceConnected()
 {
-    auto resp = sendAT("");
-    return resp.isOK();
+    return (getRegStatus() != REG_NO_RESULT);
 }

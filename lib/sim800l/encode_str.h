@@ -24,4 +24,7 @@ unsigned int symbolToUInt(const String& bytes);
 
 String byteToHexString(byte i);
 
+
+String revertBytes(const String& bytes);
+
 #endif

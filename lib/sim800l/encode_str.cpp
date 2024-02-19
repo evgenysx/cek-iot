@@ -124,3 +124,14 @@ String byteToHexString(byte i) { // Функция преобразования 
   hex.toUpperCase();
   return hex;
 }
+
+String revertBytes(const String &bytes)
+{
+  String rev = bytes;
+  for(int i=0;i<rev.length();i=i+2){
+    char tmp = rev[i];
+    rev[i] = rev[i+1];
+    rev[i+1] = tmp;
+  }
+  return rev;
+}

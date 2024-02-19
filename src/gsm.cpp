@@ -26,7 +26,8 @@ GsmCustomClient *cek::getModule()
 }
 
 cek::ws_bus::EventCallback OnBalanceUpdate = [](JsonObject*) {
-    notify(eEventType::GsmUpdateBalance, cek::getModule()->getUSSD("*100#"));
+    cek::getModule()->updateBalance();
+    //notify(eEventType::GsmUpdateBalance, );
 };
 
 cek::ws_bus::EventCallback OnStatusUpdate = [](JsonObject*) {
@@ -39,7 +40,7 @@ cek::ws_bus::EventCallback OnBatteryUpdate = [](JsonObject*) {
 };
 
 cek::ws_bus::EventCallback OnSignalQualityUpdate = [](JsonObject*) {
-    notify(eEventType::GsmUpdateSignalQuality, cek::getModule()->getSignalQuality());
+    cek::getModule()->updateSignalQuality();
 };
 
 cek::ws_bus::EventCallback OnSendSMS = [](JsonObject* data) {
@@ -68,7 +69,7 @@ cek::ws_bus::EventCallback OnRestartModem = [](JsonObject*) {
 cek::ws_bus::EventCallback OnGsmATCmd = [](JsonObject* data) {
     String cmd = (*data)["cmd"];
     Serial.println("cmd: " + cmd);
-    cek::getModule()->sendAT(cmd, 10000L);
+    cek::getModule()->sendAT(cmd, 1000L);
     // String response;
     // auto res = cek::getModule()->getATResponse();
     // debugInfo("Response ATCmd: " + cmd + " / " + String(res.code) + " / " + res.value);
@@ -79,21 +80,33 @@ cek::ws_bus::EventCallback OnGsmEnableUpdateNetworkInfo = [](JsonObject* data) {
     enableGsmUpdateStatus = value;
 };
 
+OnUserRegStatus OnRegStatus = [](RegStatus status) {
+    Serial.println("OnRegStatus got " + String(status));
+};
 
-cek::ws_bus::EventCallback OnNetworkInfo = [](JsonObject*) {
-    constexpr int bufSz = 256;
+OnUserStrCallback OnUserSignalQuality = [](String data) {
+    notify(eEventType::GsmUpdateSignalQuality, data);
+};
+
+OnUserStrCallback OnUserBalanceUpdate = [](String data) {
+    notify(eEventType::GsmUpdateBalance, data);
+};
+
+OnUserStr2Callback OnNetworkInfoEvent = [](String& key, String& value) {
+     constexpr int bufSz = 128;
     DynamicJsonDocument doc(bufSz);
-    //doc["network"] = cek::getModule()->isNetworkConnected();
-    doc["reg"] = cek::getModule()->getRegStatus();
-    doc["operator"] = cek::getModule()->getOperatorName();
-    doc["signal"] = cek::getModule()->getSignalQuality();
-
-    
-    //const size_t len = measureJson(doc);
+    doc["key"] = key;
+    doc["value"] = value;
     char buf[bufSz];
     serializeJson(doc, buf);
     Serial.println(buf);
     notify(eEventType::GsmNetworkInfo, buf);
+};
+
+cek::ws_bus::EventCallback OnNetworkInfo = [](JsonObject*) {
+   String key = "operator";
+   String data = cek::getModule()->getOperatorName();
+   OnNetworkInfoEvent(key, data);
 };
 
 bool cek::loadGSMModule()
@@ -115,6 +128,12 @@ bool cek::loadGSMModule()
     registerEventCallback(SubscibeId(eEventType::GsmATCmd), OnGsmATCmd);
     registerEventCallback(SubscibeId(eEventType::GsmEnableUpdateNetworkInfo), OnGsmEnableUpdateNetworkInfo);
 
+    //
+    cek::getModule()->setOnUserRegStatus(OnRegStatus);  
+    //cek::getModule()->setOnUserSignalQuality(OnUserSignalQuality);
+    cek::getModule()->setOnUserBalanceUpdate(OnUserBalanceUpdate);
+    cek::getModule()->setOnUserNetworkUpdate(OnNetworkInfoEvent);
+    //cek::getModule()->sendAT("+CREG=1");
     return true;
 }
 
@@ -125,46 +144,19 @@ bool restartModem(){
 }
 
 unsigned long start = millis();
-const auto MAX_GSM_NETWORK_IDLE_TIMEOUT = 2000;
+const auto MAX_GSM_NETWORK_IDLE_TIMEOUT = 4000;
 
 /**
  * мониторинг состояния сети
  * */ 
 void cek::GsmNetworkLoop(){
-  if (!enableGsmUpdateStatus)
-    return;
+//   if (!enableGsmUpdateStatus)
+//     return;
   if (millis() - start < MAX_GSM_NETWORK_IDLE_TIMEOUT)
     return;
 
-  auto regStatus = cek::getModule()->getRegistrationStatus();
+  cek::getModule()->updateRegistrationStatus();
+  Serial.println("networkLoop " + String(cek::getModule()->getRegStatus()));
 
-  Serial.println("networkLoop " + String(regStatus) + " / " + String(cek::getModule()->getRegStatus()));
-  // check new status
-  if (regStatus != cek::getModule()->getRegStatus()) {
-    cek::getModule()->setRegStatus(regStatus);
-
-    if(regStatus == RegStatus::REG_SEARCHING || regStatus == RegStatus::REG_OK_HOME ){
-        cek::getModule()->detectOperatorIMSI();
-    }else{
-        cek::getModule()->setOperator(eGsmOperator::NotSelected);
-    }
-    
-    OnNetworkInfo(nullptr);
-  }else if (regStatus == RegStatus::REG_SEARCHING || regStatus == RegStatus::REG_OK_HOME){
-    // статус сети не менялся - просто обновляем уровень сигнала
-    OnSignalQualityUpdate(nullptr);
-  }
-
-    // String response;
-    // auto res = cek::getModule()->waitResponse(1000L, response, GF("CDS"));
-    // debugInfo("Unsolicited ATCmd: " + String(res) + " / " + response);
-    // res = cek::getModule()->waitResponse(1000L, response, GF("CMTI"));
-    // debugInfo("Unsolicited ATCmd: " + String(res) + " / " + response);
-
-    // if (Serial2.available()) {                     // Если есть, что считывать...
-    //     Serial.println(Serial2.readString());
-    // }
-
-  
-    start = millis();
+  start = millis();
 }

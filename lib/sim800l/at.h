@@ -12,12 +12,11 @@
 #define TINY_GSM_MODEM_SIM800
 
 #include <Arduino.h>
-
+#include <map>
 struct ATResponse {
     // результат ответа от SIM
     uint8_t code;
     String param[5];
-    bool isFill;
 
     ATResponse();
 
@@ -56,16 +55,16 @@ private:
 
 public:
     
-    void parseCmd(char* cmd);
+    virtual bool parseCmd(char* cmd) = 0;
     ATStream(HardwareSerial &stream);
-    ATResponse sendAT(String cmd);
-    ATResponse sendAT(String cmd, String& data);
-    ATResponse sendAT(String cmd, uint32_t timeout_ms);
+    void sendAT(String cmd);
+    void sendAT(String cmd, String& data);
+    void sendAT(String cmd, uint32_t timeout_ms);
+    void write(String data);
 
 public:
-    String getIMSI();
-    String getSignalQuality();
-    RegStatus getRegistrationStatus();
+    void updateIMSI();
+    void updateSignalQuality();
 };
 
 #endif

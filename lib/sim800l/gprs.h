@@ -22,18 +22,22 @@ static inline String TinyGsmDecodeHex8bit(String& instr) {
   return result;
 }
 
+typedef std::function<void(RegStatus)> OnUserRegStatus;
+typedef std::function<void(String)> OnUserStrCallback;
+
+typedef std::function<void(String&, String&)> OnUserStr2Callback;
 
 class GsmCustomClient : public ATStream{
 public:
     void initGPRS();
     void gprsLoop();
-    String getUSSD(const String& code);
+    void getUSSD(const String& code);
 
     static GsmCustomClient* create(HardwareSerial& serial);
 
     bool isDeviceConnected();
     // определение Оператора связи
-    void detectOperatorIMSI();
+    void updateOperatorIMSI();
     const String getOperatorName();
     int sendSMSinPDU(String phone, String message);
     bool restart();
@@ -45,9 +49,17 @@ public:
     void setOperator(eGsmOperator type);
 
 
+    virtual bool parseCmd(char* cmd) override;
     String getBattVoltage();
     String getGsmLocation();
-    
+
+    void setOnUserRegStatus(OnUserRegStatus callback);
+    void setOnUserSignalQuality(OnUserStrCallback callback);
+    void setOnUserBalanceUpdate(OnUserStrCallback callback);
+    void setOnUserNetworkUpdate(OnUserStr2Callback callback);
+
+    void updateRegistrationStatus();
+    void updateBalance();
 private:
     GsmCustomClient(HardwareSerial& stream);
     
@@ -57,14 +69,33 @@ private:
     String getDAfield(String *phone, bool fullnum);
 
 
-    //TinyGsmClient client;
+    //
+    void _OnRegStatus(String&& status);
+    OnUserRegStatus _OnUserRegStatus;
 
+    void _OnSignalQuality(String&& data);
+    OnUserStrCallback _OnUserSignalQuality;
+    //
+    void _OnBalanceUpdate(String& data, int dcs);
+    OnUserStrCallback _OnUserBalanceUpdate;
+    //
+    void _OnNetworkInfoUpdate(String&& key, String& value);
+    OnUserStr2Callback _OnUserNetworkInfoUpdate;
+    //
+    void _OnUpdateIMSI(String& imsi);
+    /**
+     * Парсинг отчета об отправке смс
+    */
+    void _OnSmsDeliveryReport(String& pdu);
+    //
     const String getAPN();
 
+    
 private:   
     // Tele2 / Yota / ...
     eGsmOperator typeOperator;
     RegStatus gsmRegStatus;
+    int8_t iRegStatusReq;
 };
 
 #endif
