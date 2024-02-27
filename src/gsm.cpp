@@ -54,8 +54,7 @@ cek::ws_bus::EventCallback OnSendSMS = [](JsonObject* data) {
         notify(eEventType::GsmSendSMS, "too long sms");
         return;
     }
-    auto result = cek::getModule()->sendSMSinPDU(to, text);
-    notify(eEventType::GsmSendSMS, String(result));
+    cek::getModule()->registerSms(to, text);
 };
 
 cek::ws_bus::EventCallback OnGetLocation = [](JsonObject*) {
@@ -99,8 +98,25 @@ OnUserStr2Callback OnNetworkInfoEvent = [](String& key, String& value) {
     doc["value"] = value;
     char buf[bufSz];
     serializeJson(doc, buf);
-    Serial.println(buf);
+    //Serial.println(buf);
     notify(eEventType::GsmNetworkInfo, buf);
+};
+
+OnUserDataCallback OnUserSmsDeliveryReportEvent = [](void* data) {
+    constexpr int bufSz = 128;
+    DynamicJsonDocument doc(bufSz);
+    auto pData = (SmsReportDelivery*)data;
+    doc["mr"] = pData->mr;
+    doc["status"] = pData->status;
+    doc["delivered"] = pData->deliveryDate;
+    notify(eEventType::GsmSMSDeliveryReport, doc.as<JsonObject>());
+};
+
+/**
+ * mr - message reference
+*/
+OnUserStrCallback OnUserSmsSentEvent = [](String mr) {
+    notify(eEventType::GsmSendSMS, mr);
 };
 
 cek::ws_bus::EventCallback OnNetworkInfo = [](JsonObject*) {
@@ -133,6 +149,8 @@ bool cek::loadGSMModule()
     //cek::getModule()->setOnUserSignalQuality(OnUserSignalQuality);
     cek::getModule()->setOnUserBalanceUpdate(OnUserBalanceUpdate);
     cek::getModule()->setOnUserNetworkUpdate(OnNetworkInfoEvent);
+    cek::getModule()->setOnUserSmsDeliveryReport(OnUserSmsDeliveryReportEvent);
+    cek::getModule()->setOnUserSmsSent(OnUserSmsSentEvent);
     //cek::getModule()->sendAT("+CREG=1");
     return true;
 }
@@ -155,6 +173,7 @@ void cek::GsmNetworkLoop(){
   if (millis() - start < MAX_GSM_NETWORK_IDLE_TIMEOUT)
     return;
 
+  cek::getModule()->taskLoop();
   cek::getModule()->updateRegistrationStatus();
   Serial.println("networkLoop " + String(cek::getModule()->getRegStatus()));
 
