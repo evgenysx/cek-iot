@@ -14,6 +14,7 @@ enum class eEventType {
   GsmUpdateSignalQuality,  
   GsmUpdateBattPercent,
   GsmSendSMS,
+  GsmSMSDeliveryReport,
   GsmCallNumber,
   GsmNetworkInfo,
   GsmGetLocation,

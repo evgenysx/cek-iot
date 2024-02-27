@@ -25,22 +25,31 @@ onclick('#tab_device', () => {
 onclick('#gsm_gprs_enabled', notifyToggleCheckbox);
 onclick('#gsm_restart_btn', () => {
     console.log("restart gsm modem");
-    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CPMS?"});
-    requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMEE=2"});
-    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "A"});
-    requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CPMS?"});
-    requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CSDH?"});
+    // //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CPMS?"});
+    // requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMEE=2"});
     
-    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CPMS=\"ME_P\""});
+    // requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CPMS?"});
+    // requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CSDH?"});
     
-    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CNMI?"});
-    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CNMA=0"});
-    requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CNMI=2,2,0,1,0"});
-    // //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMGD=2,0"});
-    requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMGL=4"});
-    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMGL=\"ALL\""});
+    // //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CPMS=\"ME_P\""});
     
+    // //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CNMI?"});
+    // //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CNMA=0"});
+    // requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CNMI=2,2,0,1,0"});
+    // // //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMGD=2,0"});
+    // requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMGL=4"});
+    // //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMGL=\"ALL\""});
     
+
+    // sendAT(GF("+CMGF=1"));
+    // sendAT(String(GF("+CSCS=\"")) + format + GF("\""));
+    // //waitResponse();
+    // sendAT(String(GF("+CUSD=1,\"")) +  code + GF("\""));
+
+     //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CMGF=1"});
+     //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CSCS=\"GSM\""});
+    //requestUpdate(wsEvents.gsm.GsmATCmd, {cmd: "+CUSD=1,\"*100#\""});
+    requestUpdate(wsEvents.gsm.UpdateBalance);
 });
 
 onclick('#gsm_sendsms_btn', () => {
@@ -82,30 +91,32 @@ const updateNetworkInfo = (netInfo) => {
     renderNetworkInfo();
 }
 const setNetworkInfo = (netInfo) => {
-    networkGsmInfo = netInfo;
+    networkGsmInfo[netInfo.key] = netInfo.value;
     renderNetworkInfo();
 }
 
 const renderNetworkInfo = () => {
-    let txtStatus = "Нет связи с модемом";
-    switch (networkGsmInfo.reg){     
-        case 0:
-            txtStatus = "Не найдена gsm сеть";
-            break;
-        case 1: 
-            txtStatus = networkGsmInfo.operator + " / " + networkGsmInfo.signal;
-            break;
-        case 2:
-            txtStatus = "Поиск сети " + networkGsmInfo.operator + " / " + networkGsmInfo.signal;
-            break;
-        case 3:
-            txtStatus = "Отказ регистрации " + networkGsmInfo.operator + " / " + networkGsmInfo.signal;
-            break;
-        case 4:
-            txtStatus = "Обновление статуса";
-            break;
-    }
-    changeValue("#gsm_status", txtStatus);
+    changeValue("#gsm_status", parseRegNetworkParam());
+}
+
+const parseRegNetworkParam = () => {
+    const reg = networkGsmInfo.reg;
+    if(reg == 0) return "Не найдена gsm сеть";
+    if(reg == 1){
+        if(!networkGsmInfo.signal)
+            networkGsmInfo.signal = 0;
+        if(!networkGsmInfo.operator)
+            networkGsmInfo.operator = "";
+        return "Сеть: " + networkGsmInfo.operator + " / " + networkGsmInfo.signal;
+    } 
+     
+    if(reg == 2)
+        return "Поиск сети " + networkGsmInfo.operator + " / " + networkGsmInfo.signal;
+    if(reg == 3)
+        return "Отказ регистрации " + networkGsmInfo.operator + " / " + networkGsmInfo.signal;
+    if(reg == 4)
+        return "Обновление статуса";
+    return "Нет связи с модемом";
 }
 
 regOnMessage(wsEvents.gsm.UpdateStatus, (statusGsm) => {

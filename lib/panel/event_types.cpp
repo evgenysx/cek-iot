@@ -20,6 +20,7 @@ String strEventType[] PROGMEM = {
   "GsmUpdateSignalQuality",  
   "GsmUpdateBattPercent",
   "GsmSendSMS",
+  "GsmSMSDeliveryReport",
   "GsmCallNumber",
   "GsmNetworkInfo",
   "GsmGetLocation",

@@ -5,6 +5,7 @@ const gsmEvents = {
     UpdateBalance: 'GsmUpdateBalance',
     UpdateSignalQuality: 'GsmUpdateSignalQuality',
     SendSMS: 'GsmSendSMS',
+    GsmSMSDeliveryReport: 'GsmSMSDeliveryReport',
     CallNumber: 'GsmCallNumber',
     NetworkInfo: 'GsmNetworkInfo',
     GsmGetLocation: 'GsmGetLocation',

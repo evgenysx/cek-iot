@@ -16,6 +16,7 @@ void registerEventCallback(SubscibeId type, EventCallback callback);
 void notify(const EventMsg& msg);
 void notify(eEventType type, uint msg);
 void notify(eEventType type, const String& msg);
+void notify(eEventType type, const JsonObject& msg);
 
 void startHttpServer();
 

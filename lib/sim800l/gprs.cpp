@@ -15,6 +15,7 @@ GsmCustomClient::GsmCustomClient(HardwareSerial &stream)
 {
     gsmRegStatus = RegStatus::REG_NO_RESULT;
     iRegStatusReq = 0;
+    bCanSendSms = true;
 }
 
 void GsmCustomClient::setOperator(eGsmOperator type)
@@ -42,9 +43,14 @@ bool GsmCustomClient::parseCmd(char *cmd)
     scmd.substring(delim + 1, 1);
     _OnSignalQuality(scmd.substring(6, delim));
   }
+  else if (!memcmp(cmd, "+CMGS", 4))
+  {
+    // отчет об отправке СМС
+    _OnSmsSent(scmd.substring(7));
+  }
   else if (!memcmp(cmd, "+CDS", 4))
   {
-    // отчет об отправке СМС придет следующим сообщением
+    // отчет об доставке СМС придет следующим сообщением
   }
   else if (!memcmp(cmd, "+CME ERROR", 10))
   {
@@ -115,6 +121,16 @@ void GsmCustomClient::setOnUserBalanceUpdate(OnUserStrCallback callback)
 void GsmCustomClient::setOnUserNetworkUpdate(OnUserStr2Callback callback)
 {
   _OnUserNetworkInfoUpdate = callback;
+}
+
+void GsmCustomClient::setOnUserSmsDeliveryReport(OnUserDataCallback callback)
+{
+  _OnUserSmsDeliveryReport = callback;
+}
+
+void GsmCustomClient::setOnUserSmsSent(OnUserStrCallback callback)
+{
+  _OnUserSmsSent = callback;
 }
 
 const String GsmCustomClient::getOperatorName()
@@ -200,9 +216,21 @@ void GsmCustomClient::_OnSmsDeliveryReport(String &pdu)
   // 91 Type of address of the SMSC.
   // ...
   const auto ln = pdu.length(); 
-  Serial.println(revertBytes(pdu.substring(ln-16, ln-4)));
-  if (pdu.substring(ln-2).equals("00")){
-    Serial.println("Success");
+  SmsReportDelivery info;
+  info.deliveryDate = revertBytes(pdu.substring(ln-16, ln-4));
+  info.status = pdu.substring(ln-2);
+  info.mr = pdu.substring(18, 20);
+
+  if (_OnUserSmsDeliveryReport != NULL){
+    _OnUserSmsDeliveryReport(&info);
+  }
+}
+
+void GsmCustomClient::_OnSmsSent(String &&mr)
+{
+  bCanSendSms = true;
+  if (_OnUserSmsSent != NULL){
+    _OnUserSmsSent(mr);
   }
 }
 
@@ -297,6 +325,17 @@ void GsmCustomClient::gprsLoop() {
   // }
 }
 
+void GsmCustomClient::taskLoop()
+{
+  // отправка смс
+   if (!smsQueue.empty() && bCanSendSms){
+    bCanSendSms = false;
+    auto& sms = smsQueue.front();
+    sendSMSinPDU(sms.phone, sms.msg);
+    smsQueue.pop();
+   }
+
+}
 
 void GsmCustomClient::getUSSD(const String& code)
 {
@@ -321,8 +360,8 @@ int GsmCustomClient::sendSMSinPDU(String phone, String message)
 
   getPDUPack(ptrphone, ptrmessage, ptrPDUPack, ptrPDUlen);      // Функция формирующая PDU-пакет, и вычисляющая длину пакета без SCA
 
-  Serial.println("PDU-pack: " + PDUPack);
-  Serial.println("PDU length without SCA:" + (String)PDUlen);
+  //Serial.println("PDU-pack: " + PDUPack);
+  //Serial.println("PDU length without SCA:" + (String)PDUlen);
 
   // ============ Отправка PDU-сообщения ============================================================================================
   sendAT(GF("+CMGF=0"));
@@ -343,6 +382,12 @@ bool GsmCustomClient::restart()
 const RegStatus GsmCustomClient::getRegStatus()
 {
     return gsmRegStatus;
+}
+
+int GsmCustomClient::registerSms(String phone, String message)
+{
+    smsQueue.push(SmsInfo(phone, message));
+    return 0;
 }
 
 void GsmCustomClient::setRegStatus(RegStatus status)
@@ -401,4 +446,10 @@ GsmCustomClient *GsmCustomClient::create(HardwareSerial& serial)
 bool GsmCustomClient::isDeviceConnected()
 {
     return (getRegStatus() != REG_NO_RESULT);
+}
+
+SmsInfo::SmsInfo(String &phone, String &msg)
+{
+  this->phone = phone;
+  this->msg = msg;
 }

@@ -111,6 +111,19 @@ void cek::ws_bus::notify(eEventType type, const String& msg)
   ws.textAll(buf);
 }
 
+void cek::ws_bus::notify(eEventType type, const JsonObject &msg)
+{
+  constexpr int szNotify = 256;
+  DynamicJsonDocument doc(szNotify);
+  doc["type"] = getStrEventType(type);
+  doc["data"] = msg;
+
+  //const size_t len = measureJson(doc);
+  char buf[szNotify];
+  serializeJson(doc, buf);
+  ws.textAll(buf);
+}
+
 void cek::ws_bus::startHttpServer(){
  // Define a route to serve the HTML page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
