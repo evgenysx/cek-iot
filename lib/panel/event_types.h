@@ -32,6 +32,11 @@ enum class eEventType {
   NUM_EVENTS
 };
 
+enum class eEventResult {
+  Success = 0,
+  Error
+};
+
 String getStrEventType(eEventType type);
 eEventType getEventTypeByStr(String);
 void initEventMap();

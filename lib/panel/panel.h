@@ -14,12 +14,20 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 void registerEventCallback(SubscibeId type, EventCallback callback);
 
 void notify(const EventMsg& msg);
-void notify(eEventType type, uint msg);
+
 void notify(eEventType type, const String& msg);
 void notify(eEventType type, const JsonObject& msg);
+/**
+ * Уведомление об ошибке
+*/
+void notifyError(eEventType type, const String& msg);
+/**
+ * Уведомление об успешеной операции
+*/
+void notify(eEventType type, uint msg);
 
 void startHttpServer();
-
+JsonObject wsResponse(eEventType type, eEventResult bSuccess);
 
 void registerHandler(String url);
 

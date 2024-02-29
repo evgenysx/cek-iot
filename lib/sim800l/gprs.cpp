@@ -331,10 +331,11 @@ void GsmCustomClient::taskLoop()
    if (!smsQueue.empty() && bCanSendSms){
     bCanSendSms = false;
     auto& sms = smsQueue.front();
-    sendSMSinPDU(sms.phone, sms.msg);
-    smsQueue.pop();
+    if(!sendSMSinPDU(sms.phone, sms.msg)){
+      // при успешной отправке смс - удаляем из очереди
+      smsQueue.pop();
+    }
    }
-
 }
 
 void GsmCustomClient::getUSSD(const String& code)
@@ -347,6 +348,9 @@ void GsmCustomClient::getUSSD(const String& code)
 
 int GsmCustomClient::sendSMSinPDU(String phone, String message)
 {
+  if(!isDeviceConnected())
+    return -1;
+    
   // ============ Подготовка PDU-пакета =============================================================================================
   // В целях экономии памяти будем использовать указатели и ссылки
   String *ptrphone = &phone;                                    // Указатель на переменную с телефонным номером

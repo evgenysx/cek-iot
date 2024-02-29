@@ -20,6 +20,17 @@ bool enabledLog = true;
 #include "SPIFFS.h"
 #include <mdns.h>
 
+/**
+ * уведомление для всех ws-клиентов
+*/
+void notifyWs(const JsonObject& msg){
+  constexpr int szNotify = 256;
+  //const size_t len = measureJson(doc);
+  char buf[szNotify];
+  serializeJson(msg, buf);
+  ws.textAll(buf);
+}
+
 void start_mdns_service()
 {
    // Инициализация службы mDNS:
@@ -87,71 +98,70 @@ void cek::ws_bus::notify(const EventMsg& msg){
 
 void cek::ws_bus::notify(eEventType type, uint msg)
 {
-  DynamicJsonDocument doc(128);
-  doc["type"] = getStrEventType(type);
-  doc["data"] = msg;
-
-  //const size_t len = measureJson(doc);
-  char buf[128];
-  serializeJson(doc, buf);
-  Serial.println(buf);
-  ws.textAll(buf);
+  auto resp = wsResponse(type, eEventResult::Success);
+  resp["data"] = msg;
+  notifyWs(resp);
 }
 
 void cek::ws_bus::notify(eEventType type, const String& msg)
 {
-  constexpr int szNotify = 256;
-  DynamicJsonDocument doc(szNotify);
-  doc["type"] = getStrEventType(type);
-  doc["data"] = msg;
-
-  //const size_t len = measureJson(doc);
-  char buf[szNotify];
-  serializeJson(doc, buf);
-  ws.textAll(buf);
+  auto resp = wsResponse(type, eEventResult::Success);
+  resp["data"] = msg;
+  notifyWs(resp);
 }
 
 void cek::ws_bus::notify(eEventType type, const JsonObject &msg)
 {
-  constexpr int szNotify = 256;
-  DynamicJsonDocument doc(szNotify);
-  doc["type"] = getStrEventType(type);
-  doc["data"] = msg;
-
-  //const size_t len = measureJson(doc);
-  char buf[szNotify];
-  serializeJson(doc, buf);
-  ws.textAll(buf);
+  auto resp = wsResponse(type, eEventResult::Success);
+  resp["data"] = msg;
+  notifyWs(resp);
 }
 
-void cek::ws_bus::startHttpServer(){
- // Define a route to serve the HTML page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
+void cek::ws_bus::notifyError(eEventType type, const String &msg)
+{
+    auto resp = wsResponse(type, eEventResult::Error);
+    resp["data"] = msg;
+    notifyWs(resp);
+}
+
+void cek::ws_bus::startHttpServer()
+{
+    // Define a route to serve the HTML page
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
     Serial.println("ESP32 Web Server: New request received:");  // for debugging
-    request->send(SPIFFS, "/index.html");
-  });
+    request->send(SPIFFS, "/index.html"); });
 
-  server.on("/dist/main.css", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/dist/main.css", "text/css");
-  });
+    server.on("/dist/main.css", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(SPIFFS, "/dist/main.css", "text/css"); });
 
-  server.on("/dist/bundle.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/dist/bundle.js", "application/javascript");
-  });
+    server.on("/dist/bundle.js", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(SPIFFS, "/dist/bundle.js", "application/javascript"); });
 
-  // инициализация списка событий
-  initEventMap();
+    // инициализация списка событий
+    initEventMap();
 
-  ws.onEvent(onWsEvent);
-  server.addHandler(&ws);
+    ws.onEvent(onWsEvent);
+    server.addHandler(&ws);
 
-  SPIFFS.begin();
-  // Start the server
-  server.begin();
-  // регистрация по имени
-  start_mdns_service();
+    SPIFFS.begin();
+    // Start the server
+    server.begin();
+    // регистрация по имени
+    start_mdns_service();
 }
 
+JsonObject cek::ws_bus::wsResponse(eEventType type, eEventResult result)
+{
+    constexpr int szNotify = 256;
+    DynamicJsonDocument resp(szNotify);
+    resp["type"] = getStrEventType(type);
+    if(result == eEventResult::Success)
+      resp["status"] = "success";
+    else
+      resp["status"] = "error";
+    return resp.as<JsonObject>();
+}
 
 void cek::ws_bus::debugInfo(const String& msg)
 {

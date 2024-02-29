@@ -50,8 +50,8 @@ cek::ws_bus::EventCallback OnSendSMS = [](JsonObject* data) {
         notify(eEventType::GsmSendSMS, "bad phone format");
         return;
     }
-    if(text.length() > 70){
-        notify(eEventType::GsmSendSMS, "too long sms");
+    if(text.length() > 140){
+        notifyError(eEventType::GsmSendSMS, "too long sms");
         return;
     }
     cek::getModule()->registerSms(to, text);
