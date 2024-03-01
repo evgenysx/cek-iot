@@ -47,7 +47,7 @@ cek::ws_bus::EventCallback OnSendSMS = [](JsonObject* data) {
      String to = (*data)["to"];
      String text = (*data)["text"];
     if(to.length() != 12){
-        notify(eEventType::GsmSendSMS, "bad phone format");
+        notifyError(eEventType::GsmSendSMS, "bad phone format");
         return;
     }
     if(text.length() > 140){
