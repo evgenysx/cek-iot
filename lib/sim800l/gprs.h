@@ -51,7 +51,14 @@ public:
 
     static GsmCustomClient* create(HardwareSerial& serial);
 
+    /**
+     * Устройство отвечает на запросы (подключено), но, возможно, еще не сети 
+    */
     bool isDeviceConnected();
+    /**
+     * устройство в домашней сети и готово к работе
+    */
+    bool isDeviceReady();
     // определение Оператора связи
     void updateOperatorIMSI();
     const String getOperatorName();

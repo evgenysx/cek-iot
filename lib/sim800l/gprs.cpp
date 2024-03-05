@@ -329,7 +329,6 @@ void GsmCustomClient::taskLoop()
 {
   // отправка смс
    if (!smsQueue.empty() && bCanSendSms){
-    bCanSendSms = false;
     auto& sms = smsQueue.front();
     if(!sendSMSinPDU(sms.phone, sms.msg)){
       // при успешной отправке смс - удаляем из очереди
@@ -348,9 +347,10 @@ void GsmCustomClient::getUSSD(const String& code)
 
 int GsmCustomClient::sendSMSinPDU(String phone, String message)
 {
-  if(!isDeviceConnected())
+  if(!isDeviceReady())
     return -1;
-    
+  //  
+  bCanSendSms = false;  
   // ============ Подготовка PDU-пакета =============================================================================================
   // В целях экономии памяти будем использовать указатели и ссылки
   String *ptrphone = &phone;                                    // Указатель на переменную с телефонным номером
@@ -391,6 +391,7 @@ const RegStatus GsmCustomClient::getRegStatus()
 int GsmCustomClient::registerSms(String phone, String message)
 {
     smsQueue.push(SmsInfo(phone, message));
+    Serial.println("registerSms / size = " + String(smsQueue.size()));
     return 0;
 }
 
@@ -450,6 +451,11 @@ GsmCustomClient *GsmCustomClient::create(HardwareSerial& serial)
 bool GsmCustomClient::isDeviceConnected()
 {
     return (getRegStatus() != REG_NO_RESULT);
+}
+
+bool GsmCustomClient::isDeviceReady()
+{
+    return (getRegStatus() == REG_OK_HOME);
 }
 
 SmsInfo::SmsInfo(String &phone, String &msg)
