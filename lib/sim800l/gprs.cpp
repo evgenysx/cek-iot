@@ -23,47 +23,42 @@ void GsmCustomClient::setOperator(eGsmOperator type)
   typeOperator = type;
 }
 
-bool GsmCustomClient::parseCmd(char *cmd)
+bool GsmCustomClient::parseCmd(String scmd)
 {
-  Serial.println("parseCmd " + String(cmd));
-  auto scmd = String(cmd);
+  Serial.println("parseCmd " + scmd);
+  //auto scmd = String(cmd);
 
-  if (!memcmp(cmd, "+CREG", 5))
+  if (scmd.startsWith("+CREG"))
   {
-    
-
-    // scmd.substring(7,8);
-    // scmd.substring(9,10);
     _OnRegStatus(scmd.substring(9, 10));
   }
-  else if (!memcmp(cmd, "+CSQ", 4))
+  else if (scmd.startsWith("+CSQ"))
   {
     int delim = scmd.indexOf(',');
-    //auto signal =;
     scmd.substring(delim + 1, 1);
     _OnSignalQuality(scmd.substring(6, delim));
   }
-  else if (!memcmp(cmd, "+CMGS", 4))
+  else if (scmd.startsWith("+CMGS"))
   {
     // отчет об отправке СМС
     _OnSmsSent(scmd.substring(7));
   }
-  else if (!memcmp(cmd, "+CDS", 4))
+  else if (scmd.startsWith("+CDS"))
   {
     // отчет об доставке СМС придет следующим сообщением
   }
-  else if (!memcmp(cmd, "+CME ERROR", 10))
+  else if (scmd.startsWith("+CME ERROR"))
   {
     
   }
-  else if (!memcmp(cmd, "OK", 2))
+  else if (scmd.startsWith("OK"))
   {
    
   }
-  else if (!memcmp(cmd, "ERROR", 5))
+  else if (scmd.startsWith("ERROR"))
   {
   }
-  else if (!memcmp(cmd, "+USD", 1))
+  else if (scmd.startsWith("+CUSD"))
   {
      int delim = scmd.indexOf('"');
      int delimEnd = scmd.indexOf('"',delim+1);
@@ -73,15 +68,15 @@ bool GsmCustomClient::parseCmd(char *cmd)
 
     _OnBalanceUpdate(hex, dcs);
   }
-  else if (!memcmp(cmd, "+", 1))
+  else if (scmd.startsWith("+"))
   {
     Serial.println("income " + scmd);
   }
-  else if (strlen(cmd) == 15)
+  else if (scmd.length() == 15)
   {
     _OnUpdateIMSI(scmd);
   }
-  else if (strlen(cmd) == 66)
+  else if (scmd.length() == 66)
   {
     // example, 0791198994800721C6220C91197940005637902001917360229020019173602249
     _OnSmsDeliveryReport(scmd);

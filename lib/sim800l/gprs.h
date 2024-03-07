@@ -71,7 +71,7 @@ public:
     void setOperator(eGsmOperator type);
 
 
-    virtual bool parseCmd(char* cmd) override;
+    virtual bool parseCmd(String scmd) override;
     String getBattVoltage();
     String getGsmLocation();
 

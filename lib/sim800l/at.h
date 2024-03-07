@@ -55,7 +55,7 @@ private:
 
 public:
     
-    virtual bool parseCmd(char* cmd) = 0;
+    virtual bool parseCmd(String cmd) = 0;
     ATStream(HardwareSerial &stream);
     void sendAT(String cmd);
     void sendAT(String cmd, String& data);
