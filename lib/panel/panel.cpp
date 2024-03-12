@@ -23,11 +23,11 @@ bool enabledLog = true;
 /**
  * уведомление для всех ws-клиентов
 */
-void notifyWs(const JsonObject& msg){
+void notifyWs(const DynamicJsonDocument& msg){
   constexpr int szNotify = 256;
   //const size_t len = measureJson(doc);
   char buf[szNotify];
-  serializeJson(msg, buf);
+  auto realSz = serializeJson(msg, buf);
   ws.textAll(buf);
 }
 
@@ -110,11 +110,11 @@ void cek::ws_bus::notify(eEventType type, const String& msg)
   notifyWs(resp);
 }
 
-void cek::ws_bus::notify(eEventType type, const JsonObject &msg)
+void cek::ws_bus::notify(eEventType type, const DynamicJsonDocument &msg)
 {
   auto resp = wsResponse(type, eEventResult::Success);
   resp["data"] = msg;
-  notifyWs(resp);
+     notifyWs(resp);
 }
 
 void cek::ws_bus::notifyError(eEventType type, const String &msg)
@@ -151,7 +151,7 @@ void cek::ws_bus::startHttpServer()
     start_mdns_service();
 }
 
-JsonObject cek::ws_bus::wsResponse(eEventType type, eEventResult result)
+DynamicJsonDocument cek::ws_bus::wsResponse(eEventType type, eEventResult result)
 {
     constexpr int szNotify = 256;
     DynamicJsonDocument resp(szNotify);
@@ -160,7 +160,7 @@ JsonObject cek::ws_bus::wsResponse(eEventType type, eEventResult result)
       resp["status"] = "success";
     else
       resp["status"] = "error";
-    return resp.as<JsonObject>();
+    return resp;
 }
 
 void cek::ws_bus::debugInfo(const String& msg)

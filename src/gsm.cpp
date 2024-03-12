@@ -92,13 +92,12 @@ OnUserStrCallback OnUserBalanceUpdate = [](String data) {
 };
 
 OnUserStr2Callback OnNetworkInfoEvent = [](String& key, String& value) {
-     constexpr int bufSz = 128;
+    constexpr int bufSz = 128;
     DynamicJsonDocument doc(bufSz);
     doc["key"] = key;
     doc["value"] = value;
     char buf[bufSz];
     serializeJson(doc, buf);
-    //Serial.println(buf);
     notify(eEventType::GsmNetworkInfo, buf);
 };
 
@@ -109,7 +108,8 @@ OnUserDataCallback OnUserSmsDeliveryReportEvent = [](void* data) {
     doc["mr"] = pData->mr;
     doc["status"] = pData->status;
     doc["delivered"] = pData->deliveryDate;
-    notify(eEventType::GsmSMSDeliveryReport, doc.as<JsonObject>());
+
+    notify(eEventType::GsmSMSDeliveryReport, doc);
 };
 
 /**
@@ -168,9 +168,11 @@ const auto MAX_GSM_NETWORK_IDLE_TIMEOUT = 4000;
  * мониторинг состояния сети
  * */ 
 void cek::GsmNetworkLoop(){
-//   if (!enableGsmUpdateStatus)
-//     return;
-  if (millis() - start < MAX_GSM_NETWORK_IDLE_TIMEOUT)
+    // цикл задач
+    cek::getModule()->taskLoop();
+   if (!enableGsmUpdateStatus)
+     return;
+   if (millis() - start < MAX_GSM_NETWORK_IDLE_TIMEOUT)
     return;
 
   cek::getModule()->taskLoop();

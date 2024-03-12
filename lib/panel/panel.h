@@ -16,7 +16,7 @@ void registerEventCallback(SubscibeId type, EventCallback callback);
 void notify(const EventMsg& msg);
 
 void notify(eEventType type, const String& msg);
-void notify(eEventType type, const JsonObject& msg);
+void notify(eEventType type, const DynamicJsonDocument& msg);
 /**
  * Уведомление об ошибке
 */
@@ -27,7 +27,10 @@ void notifyError(eEventType type, const String& msg);
 void notify(eEventType type, uint msg);
 
 void startHttpServer();
-JsonObject wsResponse(eEventType type, eEventResult bSuccess);
+/**
+ * Создание нового json-ответа на сообщение
+*/
+DynamicJsonDocument wsResponse(eEventType type, eEventResult bSuccess);
 
 void registerHandler(String url);
 
