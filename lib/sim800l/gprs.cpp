@@ -223,7 +223,7 @@ void GsmCustomClient::_OnSmsDeliveryReport(String &pdu)
 
 void GsmCustomClient::_OnSmsSent(String &&mr)
 {
-  bCanSendSms = true;
+  unLockSmsSend();
   if (_OnUserSmsSent != NULL){
     _OnUserSmsSent(mr);
   }
@@ -239,9 +239,20 @@ const String GsmCustomClient::getAPN()
   return "not selected APN";
 }
 
+void GsmCustomClient::lockSmsSend()
+{
+  bCanSendSms = false;
+}
+
+void GsmCustomClient::unLockSmsSend()
+{
+  bCanSendSms = true;
+}
+
 void GsmCustomClient::updateRegistrationStatus()
 {
     if (iRegStatusReq++ > 2){
+      Serial.println("updateRegistrationStatus / " + String(iRegStatusReq));
       setRegStatus(RegStatus::REG_NO_RESULT);
       iRegStatusReq = 0;
     } 
@@ -344,8 +355,9 @@ int GsmCustomClient::sendSMSinPDU(String phone, String message)
 {
   if(!isDeviceReady())
     return -1;
-  //  
-  bCanSendSms = false;  
+  // блокируем отправку сразу нескольких смс  
+  lockSmsSend();
+  // 
   // ============ Подготовка PDU-пакета =============================================================================================
   // В целях экономии памяти будем использовать указатели и ссылки
   String *ptrphone = &phone;                                    // Указатель на переменную с телефонным номером
@@ -364,15 +376,26 @@ int GsmCustomClient::sendSMSinPDU(String phone, String message)
 
   // ============ Отправка PDU-сообщения ============================================================================================
   sendAT(GF("+CMGF=0"));
-  // https://wiki.iarduino.ru/page/a6_gprs_at/#AT_CMGS
+    // https://wiki.iarduino.ru/page/a6_gprs_at/#AT_CMGS
   sendAT("+CMGS=" + (String)PDUlen, 100);
   write(PDUPack + String(char(0x1A)));
-  return 0;
+    return 0;
 }
 
 bool GsmCustomClient::restart()
 {
-  //bool bRestart = TinyGsm::restart();
+  // Требует тестирования
+
+  //выключаем устройство
+  sendAT("+CFUN=0,1");
+  //delay(5000);
+  //включаем устройство
+  sendAT("+CFUN=1,1");
+  return init();
+}
+
+bool GsmCustomClient::init()
+{
   setRegStatus(RegStatus::REG_NO_RESULT);
   setOperator(eGsmOperator::NotSelected);
   return true;

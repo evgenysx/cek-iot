@@ -9,6 +9,7 @@ GsmCustomClient* gsmClient;
 bool enableGsmUpdateStatus = true;
 
 bool restartModem();
+bool startModem();
 
 bool cek::unloadGSMModule()
 {
@@ -129,7 +130,7 @@ bool cek::loadGSMModule()
 {
     registerEventCallback(SubscibeId(eEventType::GsmUpdateStatus), OnStatusUpdate);
     //
-    restartModem();
+    startModem();
     // регистрация обработчиков
     //
     registerEventCallback(SubscibeId(eEventType::GsmNetworkInfo), OnNetworkInfo);
@@ -157,8 +158,12 @@ bool cek::loadGSMModule()
 
 bool restartModem(){
     debugInfo("Restart gsm module");
-    bool bRestart = cek::getModule()->restart();
-    return bRestart;
+    return cek::getModule()->restart();
+}
+
+bool startModem(){
+    debugInfo("Init gsm module");
+    return cek::getModule()->init();
 }
 
 unsigned long start = millis();
@@ -170,12 +175,12 @@ const auto MAX_GSM_NETWORK_IDLE_TIMEOUT = 4000;
 void cek::GsmNetworkLoop(){
     // цикл задач
     cek::getModule()->taskLoop();
+    
    if (!enableGsmUpdateStatus)
      return;
    if (millis() - start < MAX_GSM_NETWORK_IDLE_TIMEOUT)
     return;
 
-  cek::getModule()->taskLoop();
   cek::getModule()->updateRegistrationStatus();
   Serial.println("networkLoop " + String(cek::getModule()->getRegStatus()));
 

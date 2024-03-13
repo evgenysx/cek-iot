@@ -62,9 +62,21 @@ public:
     // определение Оператора связи
     void updateOperatorIMSI();
     const String getOperatorName();
+    /**
+     * перезагружает устройство
+    */
     bool restart();
-
+    /**
+     * Начальная инициализация устройства
+    */
+    bool init();
+    /**
+     * Получаем текущий статус регистрации в сети
+    */
     const RegStatus getRegStatus();
+    /**
+     * Добавляем смс в очередь для отправки
+    */
     int registerSms(String phone, String message);
 
     void setRegStatus(RegStatus status);
@@ -118,6 +130,15 @@ private:
     //
     const String getAPN();
 
+    /**
+     * блокирует отправку новых смс.
+     * смс можно отправлять только последовательно по 1.
+    */
+    void lockSmsSend();
+    /**
+     * разрешает отправку новых смс
+    */
+    void unLockSmsSend();
 private:   
     // Tele2 / Yota / ...
     eGsmOperator typeOperator;
