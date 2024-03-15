@@ -3,7 +3,10 @@
 
 #include "at.h"
 #include <queue>
-//
+
+/**
+ * Список известных смс операторов
+*/
 enum class eGsmOperator {
     NotSelected = -1, Tele2, Yota, Beeline, MTC, MegaFon
 };
@@ -28,6 +31,9 @@ typedef std::function<void(String)> OnUserStrCallback;
 typedef std::function<void(String&, String&)> OnUserStr2Callback;
 typedef std::function<void(void*)> OnUserDataCallback;
 
+/**
+ * Отчет о доставке смс
+ */
 struct SmsReportDelivery
 {
     String deliveryDate;
@@ -35,6 +41,9 @@ struct SmsReportDelivery
     String mr;
 };
 
+/**
+ * Задание на отправку смс 
+*/
 struct SmsInfo {
     String phone;
     String msg;
@@ -42,6 +51,9 @@ struct SmsInfo {
     SmsInfo(String& phone, String& msg);
 };
 
+/**
+ * Класс для работы с смс-модулем
+*/
 class GsmCustomClient : public ATStream{
 public:
     void initGPRS();
@@ -70,6 +82,11 @@ public:
      * Начальная инициализация устройства
     */
     bool init();
+
+    /**
+     * Запуск
+    */
+    bool start();
     /**
      * Получаем текущий статус регистрации в сети
     */
@@ -82,9 +99,14 @@ public:
     void setRegStatus(RegStatus status);
     void setOperator(eGsmOperator type);
 
-
+    /**
+     * Разбирает ответ смс-модуля(sim800l) на запрос
+    */
     virtual bool parseCmd(String scmd) override;
     String getBattVoltage();
+    /**
+     * Получение текущих координат Базовой Станции
+    */
     String getGsmLocation();
 
     void setOnUserRegStatus(OnUserRegStatus callback);
@@ -140,12 +162,20 @@ private:
     */
     void unLockSmsSend();
 private:   
-    // Tele2 / Yota / ...
+    // Оператор сим-карты Tele2 / Yota / ...
     eGsmOperator typeOperator;
+    /**
+     * Текущий статуцс регистрации в сети
+    */
     RegStatus gsmRegStatus;
-    int8_t iRegStatusReq;
 
+    /**
+     * Очередь смс на отправку
+    */
     std::queue<SmsInfo> smsQueue;
+    /**
+     * возможность отправки новых смс
+    */
     boolean bCanSendSms;
 };
 
