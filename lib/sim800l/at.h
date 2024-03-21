@@ -10,13 +10,28 @@
 //=============================================
 // Select your modem:
 #define TINY_GSM_MODEM_SIM800
+// приглашение на ввод смс PDU
+#define SMS_NL "> "
+
 
 #include <Arduino.h>
 #include <map>
+
+enum class eATcode {
+  Unknown = -1,
+  Success,
+  Error
+};
+
+/**
+ * AT запрос-ответ от модема
+*/
 struct ATResponse {
+    eATcode code;
+    // команда
+    String cmd;
     // результат ответа от SIM
-    uint8_t code;
-    String param[5];
+    String response;
 
     ATResponse();
 
@@ -24,18 +39,34 @@ struct ATResponse {
 };
 
 
+/**
+ * Буфер для команды в модем
+*/
 struct BufAtCmd {
+    friend class ATStream;
     private:
         char* buf;
         int len;
         int cap;
+
+        /**
+         * at-обмен с модемом
+        */
+        ATResponse at;
+
+        boolean foundAT;
     public:
         void reserve(uint cap);
-        
+        /**
+         * добавляет 1 символ из потока
+        */
         bool addChar(char c);
+
+        bool parseCmd();
 
         char* data();
         void clear();
+
         BufAtCmd & operator +=(const char *cstr);
         BufAtCmd();
 };
@@ -55,7 +86,7 @@ private:
 
 public:
     
-    virtual bool parseCmd(String cmd) = 0;
+    virtual bool parseCmd(const ATResponse& at) = 0;
     ATStream(HardwareSerial &stream);
     void sendAT(String cmd);
     void sendAT(String cmd, String& data);
