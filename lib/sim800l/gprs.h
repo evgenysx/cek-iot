@@ -47,6 +47,8 @@ struct SmsReportDelivery
 struct SmsInfo {
     String phone;
     String msg;
+    // представление смс в pdu формате
+    String pduPack;
 
     SmsInfo(String& phone, String& msg);
 };
@@ -102,7 +104,7 @@ public:
     /**
      * Разбирает ответ смс-модуля(sim800l) на запрос
     */
-    virtual bool parseCmd(String scmd) override;
+    virtual bool parseCmd(const ATResponse& at) override;
     String getBattVoltage();
     /**
      * Получение текущих координат Базовой Станции
@@ -125,7 +127,7 @@ private:
     // sms helpers
     void getPDUPack(String *phone, String *message, String *result, int *PDUlen);
     String getDAfield(String *phone, bool fullnum);
-    int sendSMSinPDU(String phone, String message);
+    int sendSMSinPDU(SmsInfo& sms);
 
     //
     void _OnRegStatus(String&& status);
@@ -140,11 +142,11 @@ private:
     void _OnNetworkInfoUpdate(String&& key, String& value);
     OnUserStr2Callback _OnUserNetworkInfoUpdate;
     //
-    void _OnUpdateIMSI(String& imsi);
+    void _OnUpdateIMSI(const String& imsi);
     /**
      * Парсинг отчета об отправке смс
     */
-    void _OnSmsDeliveryReport(String& pdu);
+    void _OnSmsDeliveryReport(const String& pdu);
     OnUserDataCallback _OnUserSmsDeliveryReport;
     //
     void _OnSmsSent(String&& mr);

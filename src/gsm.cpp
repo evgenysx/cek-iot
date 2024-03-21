@@ -130,7 +130,7 @@ bool cek::loadGSMModule()
 {
     registerEventCallback(SubscibeId(eEventType::GsmUpdateStatus), OnStatusUpdate);
     //
-    startModem();
+    //startModem();
     // регистрация обработчиков
     //
     registerEventCallback(SubscibeId(eEventType::GsmNetworkInfo), OnNetworkInfo);
@@ -176,12 +176,11 @@ void cek::GsmNetworkLoop(){
     // цикл задач
     cek::getModule()->taskLoop();
     
-   if (!enableGsmUpdateStatus)
-     return;
+//    if (!enableGsmUpdateStatus)
+//      return;
    if (millis() - start < MAX_GSM_NETWORK_IDLE_TIMEOUT)
     return;
 
-  cek::getModule()->updateRegistrationStatus();
   Serial.println("networkLoop " + String(cek::getModule()->getRegStatus()));
 
   start = millis();

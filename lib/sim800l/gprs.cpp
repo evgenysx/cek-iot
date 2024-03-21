@@ -10,11 +10,16 @@
 // Define the serial console for debug prints, if needed
 #define TINY_GSM_DEBUG SerialMon
 
+/**
+ * Время последней попытки соединения с смс модулем(sim800l)
+*/
+unsigned long timeTryConnect = 0;
+
 GsmCustomClient::GsmCustomClient(HardwareSerial &stream)
     : ATStream(stream)
 {
-    gsmRegStatus = RegStatus::REG_NO_RESULT;
-    iRegStatusReq = 0;
+    init();
+    // возможность отправки новых смс
     bCanSendSms = true;
 }
 
@@ -23,63 +28,82 @@ void GsmCustomClient::setOperator(eGsmOperator type)
   typeOperator = type;
 }
 
-bool GsmCustomClient::parseCmd(String scmd)
+bool GsmCustomClient::parseCmd(const ATResponse& at)
 {
-  Serial.println("parseCmd " + scmd);
-  //auto scmd = String(cmd);
-
-  if (scmd.startsWith("+CREG"))
+  
+  Serial.println("parseCmd " + at.cmd + " / resp = " + at.response);
+  //link
+  auto& r = at.response;
+  if (r.startsWith("+CREG"))
   {
-    _OnRegStatus(scmd.substring(9, 10));
+    // ответ может прийти в 2 форматах
+    // 1. +CREG: 1,1  - ответ в явном виде, когда был запрос CREG?
+    // 2. +CREG: 1 - уведомление в неявном виде, при смене статуса
+    if(r.length() > 8)
+      _OnRegStatus(r.substring(9, 10)); // +CREG: 1,1 - вторая цифра
+    else
+      _OnRegStatus(r.substring(7,8));
   }
-  else if (scmd.startsWith("+CSQ"))
+  else if (r.startsWith("+CSQ"))
   {
-    int delim = scmd.indexOf(',');
-    scmd.substring(delim + 1, 1);
-    _OnSignalQuality(scmd.substring(6, delim));
+    int delim = r.indexOf(',');
+    r.substring(delim + 1, 1);
+    _OnSignalQuality(r.substring(6, delim));
   }
-  else if (scmd.startsWith("+CMGS"))
+  else if (r.startsWith("+CMGS"))
   {
     // отчет об отправке СМС
-    _OnSmsSent(scmd.substring(7));
+    _OnSmsSent(r.substring(7));
   }
-  else if (scmd.startsWith("+CDS"))
+  else if (r.startsWith("+CDS"))
   {
-    // отчет об доставке СМС придет следующим сообщением
+    // отчет об доставке СМС
+    // example
+    // +CDS: 2507919712690080F806040B919780618043F8423002718352214230027183722100
+    _OnSmsDeliveryReport(r.substring(8));
   }
-  else if (scmd.startsWith("+CME ERROR"))
+  else if (r.startsWith("+CME ERROR"))
   {
     
   }
-  else if (scmd.startsWith("OK"))
+  else if (r.startsWith("OK"))
   {
-   
+    
   }
-  else if (scmd.startsWith("ERROR"))
+  else if (r.startsWith("AT+CFUN=0"))
+  {
+    init();
+    // пауза перед включением
+    delay(3000);
+    //включаем устройство
+    sendAT("+CFUN=1,1");
+    delay(3000);
+  }
+  else if (r.startsWith("ERROR"))
   {
   }
-  else if (scmd.startsWith("+CUSD"))
+  else if (r.startsWith("+CUSD"))
   {
-     int delim = scmd.indexOf('"');
-     int delimEnd = scmd.indexOf('"',delim+1);
+     int delim = r.indexOf('"');
+     int delimEnd = r.indexOf('"',delim+1);
 
-    auto hex = scmd.substring(delim+1, delimEnd);
-    auto dcs = atoi(scmd.substring(delimEnd + 2).c_str());
+    auto hex = r.substring(delim+1, delimEnd);
+    auto dcs = atoi(r.substring(delimEnd + 2).c_str());
 
     _OnBalanceUpdate(hex, dcs);
   }
-  else if (scmd.startsWith("+"))
+  else if (r.startsWith("+"))
   {
-    Serial.println("income " + scmd);
+    Serial.println("income " + r);
   }
-  else if (scmd.length() == 15)
+  else if (r.startsWith(SMS_NL))
   {
-    _OnUpdateIMSI(scmd);
+    // пишем pdu + конец смс char(0x1A)    
+    write(smsQueue.front().pduPack + String(char(0x1A)));
   }
-  else if (scmd.length() == 66)
+  else if (r.startsWith("AT+CIMI"))
   {
-    // example, 0791198994800721C6220C91197940005637902001917360229020019173602249
-    _OnSmsDeliveryReport(scmd);
+    _OnUpdateIMSI(at.response);
   }
   else
   {
@@ -144,8 +168,6 @@ const String GsmCustomClient::getOperatorName()
 
 void GsmCustomClient::_OnRegStatus(String&& status)
 {
-  iRegStatusReq--;
-
   auto regStatus = (RegStatus)atoi(status.c_str());
   // обновляем данные об операторе
   if(regStatus == RegStatus::REG_SEARCHING || regStatus == RegStatus::REG_OK_HOME ){
@@ -185,7 +207,7 @@ void GsmCustomClient::_OnNetworkInfoUpdate(String &&key, String &value)
   }
 }
 
-void GsmCustomClient::_OnUpdateIMSI(String &imsi)
+void GsmCustomClient::_OnUpdateIMSI(const String &imsi)
 {
   // https://ru.wikipedia.org/wiki/IMSI
   // Mobile Network Code
@@ -203,7 +225,7 @@ void GsmCustomClient::_OnUpdateIMSI(String &imsi)
   _OnNetworkInfoUpdate("operator", net);
 }
 
-void GsmCustomClient::_OnSmsDeliveryReport(String &pdu)
+void GsmCustomClient::_OnSmsDeliveryReport(const String &pdu)
 {
   // https://smsconnexion.wordpress.com/2009/02/12/sms-pdu-formats-demystified/
   // 0791198994800721 C6220C91197940005637902001917360229020019173602249
@@ -251,11 +273,6 @@ void GsmCustomClient::unLockSmsSend()
 
 void GsmCustomClient::updateRegistrationStatus()
 {
-    if (iRegStatusReq++ > 2){
-      Serial.println("updateRegistrationStatus / " + String(iRegStatusReq));
-      setRegStatus(RegStatus::REG_NO_RESULT);
-      iRegStatusReq = 0;
-    } 
     sendAT(GF("+CREG?"));
 }
 
@@ -333,13 +350,24 @@ void GsmCustomClient::gprsLoop() {
 
 void GsmCustomClient::taskLoop()
 {
-  // отправка смс
+  // задача - отправка смс
    if (!smsQueue.empty() && bCanSendSms){
     auto& sms = smsQueue.front();
-    if(!sendSMSinPDU(sms.phone, sms.msg)){
+    if(!sendSMSinPDU(sms)){
       // при успешной отправке смс - удаляем из очереди
       smsQueue.pop();
     }
+   }
+   // задача - проверка подключения
+   if(!isDeviceConnected()){
+    // попытка начать работу с модемом
+    if (millis() - timeTryConnect < 5000)
+      return;
+
+    Serial.println("Try to connect sim800l ");
+
+    timeTryConnect = millis();
+    start();
    }
 }
 
@@ -351,7 +379,7 @@ void GsmCustomClient::getUSSD(const String& code)
   sendAT(String(GF("+CUSD=1,\"")) + code + GF("\""));
 }
 
-int GsmCustomClient::sendSMSinPDU(String phone, String message)
+int GsmCustomClient::sendSMSinPDU(SmsInfo& sms)
 {
   if(!isDeviceReady())
     return -1;
@@ -360,45 +388,53 @@ int GsmCustomClient::sendSMSinPDU(String phone, String message)
   // 
   // ============ Подготовка PDU-пакета =============================================================================================
   // В целях экономии памяти будем использовать указатели и ссылки
-  String *ptrphone = &phone;                                    // Указатель на переменную с телефонным номером
-  String *ptrmessage = &message;                                // Указатель на переменную с сообщением
-
-  String PDUPack;                                               // Переменная для хранения PDU-пакета
-  String *ptrPDUPack = &PDUPack;                                // Создаем указатель на переменную с PDU-пакетом
+  String *ptrphone = &sms.phone;                                    // Указатель на переменную с телефонным номером
+  String *ptrmessage = &sms.msg;                                // Указатель на переменную с сообщением
+                                              // Переменная для хранения PDU-пакета
+  String *ptrPDUPack = &sms.pduPack;                                // Создаем указатель на переменную с PDU-пакетом
 
   int PDUlen = 0;                                               // Переменная для хранения длины PDU-пакета без SCA
   int *ptrPDUlen = &PDUlen;                                     // Указатель на переменную для хранения длины PDU-пакета без SCA
 
   getPDUPack(ptrphone, ptrmessage, ptrPDUPack, ptrPDUlen);      // Функция формирующая PDU-пакет, и вычисляющая длину пакета без SCA
 
-  //Serial.println("PDU-pack: " + PDUPack);
+  //Serial.println("PDU-pack: " + sms.pduPack);
   //Serial.println("PDU length without SCA:" + (String)PDUlen);
 
   // ============ Отправка PDU-сообщения ============================================================================================
-  sendAT(GF("+CMGF=0"));
+  sendAT("+CMGF=0");
     // https://wiki.iarduino.ru/page/a6_gprs_at/#AT_CMGS
   sendAT("+CMGS=" + (String)PDUlen, 100);
-  write(PDUPack + String(char(0x1A)));
+  //
+  //write(PDUPack + String(char(0x1A)));
     return 0;
 }
 
 bool GsmCustomClient::restart()
 {
-  // Требует тестирования
-
   //выключаем устройство
-  sendAT("+CFUN=0,1");
-  //delay(5000);
-  //включаем устройство
-  sendAT("+CFUN=1,1");
-  return init();
+  Serial.println("restart 0");
+  sendAT("+CFUN=0");
+  return true;
 }
 
 bool GsmCustomClient::init()
 {
+  Serial.println("init gsm");
   setRegStatus(RegStatus::REG_NO_RESULT);
   setOperator(eGsmOperator::NotSelected);
   return true;
+}
+
+bool GsmCustomClient::start()
+{
+    // эхо
+    sendAT(GF("E1"));
+     
+    Serial.println("start gsm routine");
+    sendAT(GF("+CREG=1"));
+    updateRegistrationStatus();
+    return true;
 }
 
 const RegStatus GsmCustomClient::getRegStatus()
@@ -468,7 +504,8 @@ GsmCustomClient *GsmCustomClient::create(HardwareSerial& serial)
 
 bool GsmCustomClient::isDeviceConnected()
 {
-    return (getRegStatus() != REG_NO_RESULT);
+  auto status = getRegStatus();
+  return ((status != REG_NO_RESULT) && (status != REG_UNKNOWN));
 }
 
 bool GsmCustomClient::isDeviceReady()
