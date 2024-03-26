@@ -50,10 +50,9 @@ bool GsmCustomClient::parseCmd(const ATResponse& at)
     r.substring(delim + 1, 1);
     _OnSignalQuality(r.substring(6, delim));
   }
-  else if (r.startsWith("+CMGS"))
+  else if (at.cmd.startsWith("AT+CMGF"))
   {
-    // отчет об отправке СМС
-    _OnSmsSent(r.substring(7));
+    
   }
   else if (r.startsWith("+CDS"))
   {
@@ -91,6 +90,9 @@ bool GsmCustomClient::parseCmd(const ATResponse& at)
     auto dcs = atoi(r.substring(delimEnd + 2).c_str());
 
     _OnBalanceUpdate(hex, dcs);
+  }else if (r.startsWith("+CMGS"))
+  {
+    _OnSmsSent(r.substring(7));
   }
   else if (r.startsWith("+"))
   {
@@ -98,7 +100,7 @@ bool GsmCustomClient::parseCmd(const ATResponse& at)
   }
   else if (r.startsWith(SMS_NL))
   {
-    // пишем pdu + конец смс char(0x1A)    
+    // пишем pdu + конец смс char(0x1A)  
     write(smsQueue.front().pduPack + String(char(0x1A)));
   }
   else if (r.startsWith("AT+CIMI"))
@@ -268,6 +270,9 @@ void GsmCustomClient::lockSmsSend()
 
 void GsmCustomClient::unLockSmsSend()
 {
+  // при успешной отправке смс - удаляем из очереди
+  smsQueue.pop();
+  // можно отправлять новые смс
   bCanSendSms = true;
 }
 
@@ -354,8 +359,7 @@ void GsmCustomClient::taskLoop()
    if (!smsQueue.empty() && bCanSendSms){
     auto& sms = smsQueue.front();
     if(!sendSMSinPDU(sms)){
-      // при успешной отправке смс - удаляем из очереди
-      smsQueue.pop();
+      ;
     }
    }
    // задача - проверка подключения
@@ -402,9 +406,9 @@ int GsmCustomClient::sendSMSinPDU(SmsInfo& sms)
   //Serial.println("PDU length without SCA:" + (String)PDUlen);
 
   // ============ Отправка PDU-сообщения ============================================================================================
-  sendAT("+CMGF=0");
+  //sendAT("+CMGF=0");
     // https://wiki.iarduino.ru/page/a6_gprs_at/#AT_CMGS
-  sendAT("+CMGS=" + (String)PDUlen, 100);
+  sendAT("+CMGS=" + (String)PDUlen, 0);
   //
   //write(PDUPack + String(char(0x1A)));
     return 0;
@@ -433,6 +437,7 @@ bool GsmCustomClient::start()
      
     Serial.println("start gsm routine");
     sendAT(GF("+CREG=1"));
+    sendAT("+CMGF?");
     updateRegistrationStatus();
     return true;
 }
