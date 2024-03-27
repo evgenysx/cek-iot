@@ -69,15 +69,6 @@ bool GsmCustomClient::parseCmd(const ATResponse& at)
   {
     
   }
-  else if (r.startsWith("AT+CFUN=0"))
-  {
-    init();
-    // пауза перед включением
-    delay(3000);
-    //включаем устройство
-    sendAT("+CFUN=1,1");
-    delay(3000);
-  }
   else if (r.startsWith("ERROR"))
   {
   }
@@ -171,6 +162,7 @@ const String GsmCustomClient::getOperatorName()
 void GsmCustomClient::_OnRegStatus(String&& status)
 {
   auto regStatus = (RegStatus)atoi(status.c_str());
+  setRegStatus(regStatus);
   // обновляем данные об операторе
   if(regStatus == RegStatus::REG_SEARCHING || regStatus == RegStatus::REG_OK_HOME ){
     if (typeOperator == eGsmOperator::NotSelected){
@@ -182,7 +174,6 @@ void GsmCustomClient::_OnRegStatus(String&& status)
     setOperator(eGsmOperator::NotSelected);
   }
   //
-  setRegStatus(regStatus);
   if (_OnUserRegStatus != NULL){
     //_OnUserRegStatus(regStatus);
     _OnNetworkInfoUpdate("reg", status);
@@ -416,9 +407,14 @@ int GsmCustomClient::sendSMSinPDU(SmsInfo& sms)
 
 bool GsmCustomClient::restart()
 {
-  //выключаем устройство
-  Serial.println("restart 0");
-  sendAT("+CFUN=0");
+  auto reset_sim800_pin = 4; // gpio 4 / 26
+  //выключаем устройство - подаем низкий сигнал на 'RST' пин SIM800L
+  pinMode(reset_sim800_pin, OUTPUT);
+  digitalWrite(reset_sim800_pin, LOW);
+  delay(200); // рекомендуемая минимальная длительность 100ms
+  // возвращаем режим обратно
+  pinMode(reset_sim800_pin, INPUT);
+  init();
   return true;
 }
 
