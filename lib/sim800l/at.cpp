@@ -137,12 +137,12 @@ ATStream::ATStream(HardwareSerial &stream)
 
 void ATStream::sendAT(String cmd)
 {
-    sendAT(cmd,1000);
+    sendAT(cmd,0);
 }
 
 void ATStream::sendAT(String cmd, String &data)
 {
-    sendAT(cmd,1000);
+    sendAT(cmd,0);
 }
 
 void ATStream::sendAT(String cmd, uint32_t timeout_ms)
